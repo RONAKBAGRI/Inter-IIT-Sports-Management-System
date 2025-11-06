@@ -1,3 +1,5 @@
+USE SportsManagementSystem;
+
 -- MySQL dump 10.13  Distrib 8.0.42, for Win64 (x86_64)
 --
 -- Host: localhost    Database: SportsManagementSystem

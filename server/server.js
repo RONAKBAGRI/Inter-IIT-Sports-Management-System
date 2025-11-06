@@ -14,10 +14,12 @@ app.use(express.json());
 
 // Route Imports
 const participantRoutes = require('./routes/participants');
+const logisticsRoutes = require('./routes/logistics'); 
 // const eventRoutes = require('./routes/events'); // Future Module
 
 // Mount Routes
 app.use('/api/participants', participantRoutes);
+app.use('/api/logistics', logisticsRoutes);
 // app.use('/api/events', eventRoutes); 
 
 app.get('/', (req, res) => {

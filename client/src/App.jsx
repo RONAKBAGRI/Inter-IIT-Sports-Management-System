@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Dashboard from './pages/Dashboard.jsx';
 import ParticipantManagement from './pages/ParticipantManagement.jsx';
+import LogisticsManagement from './pages/LogisticsManagement.jsx'; // ADD THIS LINE
 
 function App() {
   return (
@@ -26,7 +27,7 @@ function App() {
             <Route path="/participants" element={<ParticipantManagement />} />
             
             <Route path="/events" element={<div style={comingSoonStyle}>🗓️ Match Scheduling & Results Module (Under Development)</div>} />
-            <Route path="/logistics" element={<div style={comingSoonStyle}>📦 Transport & Equipment Management (Under Development)</div>} />
+            <Route path="/logistics" element={<LogisticsManagement />} /> {/* CHANGE THIS LINE */}
             
             <Route path="*" element={<h2 style={notFoundStyle}>404 Page Not Found</h2>} />
           </Routes>
@@ -36,6 +37,7 @@ function App() {
   );
 }
 
+// Keep all the existing styles as they are
 const headerStyle = {
   background: 'var(--color-dark)',
   color: 'var(--color-white)',
