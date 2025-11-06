@@ -10,7 +10,8 @@ import FinancialsAndIncidents from './pages/FinancialsAndIncidents.jsx';
 
 
 // Placeholder components for unbuilt modules
-const FinancialsPlaceholder = () => <div style={comingSoonStyle}>💰 Financial Tracking & Incident Log (Under Development)</div>;
+// NOTE: We only need a placeholder for the Financials route if the component wasn't loaded. 
+// Since FinancialsAndIncidents is now implemented and imported, we remove the placeholder component.
 
 
 function App() {
@@ -36,9 +37,10 @@ function App() {
             <Route path="/participants" element={<ParticipantManagement />} />
             
             <Route path="/events" element={<EventManagement />} />
-            {/* UPDATED LOGISTICS ROUTE */}
             <Route path="/logistics" element={<LogisticsManagement />} />
-            <Route path="/financials" element={<FinancialsPlaceholder />} />
+            
+            {/* CORRECTED FINANCIALS ROUTE: Now loads the implemented component */}
+            <Route path="/financials" element={<FinancialsAndIncidents />} />
             
             <Route path="*" element={<h2 style={notFoundStyle}>404 Page Not Found</h2>} />
           </Routes>
@@ -72,15 +74,7 @@ const mainStyle = {
   margin: '0 auto'
 };
 
-const comingSoonStyle = {
-    padding: '30px',
-    textAlign: 'center',
-    backgroundColor: 'var(--color-warning)',
-    color: 'var(--color-dark)',
-    borderRadius: '8px',
-    marginTop: '20px',
-    fontWeight: 'bold'
-};
+// Removed unused comingSoonStyle definition as no placeholders remain.
 
 const notFoundStyle = {
     color: 'var(--color-danger)',

@@ -279,3 +279,44 @@ export const createTransportSchedule = async (scheduleData) => {
         throw error.response.data;
     }
 };
+
+
+export const fetchTransactions = async () => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/financials/transactions`);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Failed to fetch transactions.', error);
+        throw error;
+    }
+};
+
+export const createTransaction = async (transactionData) => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/financials/transactions`, transactionData);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Failed to create transaction.', error.response.data);
+        throw error.response.data;
+    }
+};
+
+export const fetchIncidents = async () => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/financials/incidents`);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Failed to fetch incidents.', error);
+        throw error;
+    }
+};
+
+export const createIncident = async (incidentData) => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/financials/incidents`, incidentData);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Failed to create incident.', error.response.data);
+        throw error.response.data;
+    }
+};

@@ -16,15 +16,17 @@ app.use(express.json());
 const participantRoutes = require('./routes/participants');
 const dashboardRoutes = require('./routes/dashboard'); 
 const eventRoutes = require('./routes/events');
-// NEW LOGISTICS IMPORT
 const logisticsRoutes = require('./routes/logistics');
+// NEW FINANCIALS IMPORT
+const financialRoutes = require('./routes/financials');
 
 // Mount Routes
 app.use('/api/participants', participantRoutes);
 app.use('/api/dashboard', dashboardRoutes); 
 app.use('/api/events', eventRoutes);
-// NEW LOGISTICS MOUNT
-app.use('/api/logistics', logisticsRoutes); 
+app.use('/api/logistics', logisticsRoutes);
+// NEW FINANCIALS MOUNT
+app.use('/api/financials', financialRoutes);
 
 app.get('/', (req, res) => {
     res.send('Sports Management API is Running!');
