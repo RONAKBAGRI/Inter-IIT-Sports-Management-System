@@ -80,7 +80,7 @@ function Dashboard() {
     return (
         <>
             <div style={{ padding: '0px' }}>
-                <h2>🏆 Inter-IIT Sports Championship Dashboard</h2>
+                <h2>Inter-IIT Sports Meet Dashboard</h2>
                 
                 {/* 1. Leaderboard Section (Full Width, Stacked Above) */}
                 <div className="responsive-flex-container" style={{ marginBottom: 'var(--gap-base)' }}>
@@ -148,82 +148,6 @@ function Dashboard() {
                     </div>
                 </div>
             </div>
-
-            {/* FOOTER - FIXED VERSION - No Overflow, No White Space */}
-            <footer style={{
-                background: '#1565C0',
-                color: '#ffffff',
-                padding: '20px 0 10px 0',
-                marginTop: '40px'
-            }}>
-                <div style={{
-                    maxWidth: '1300px',   // <- Set this to match your header/container/card's maxWidth
-                    margin: '0 auto',
-                    padding: '0 20px',
-                    boxSizing: 'border-box'
-                }}>
-                    <div style={{ marginBottom: '12px', textAlign: 'center' }}>
-                        <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 3px 0' }}>
-                            Sports Management System
-                        </h3>
-                        <p style={{ fontSize: '12px', margin: 0, color: '#E3F2FD', fontStyle: 'italic' }}>
-                            Inter-IIT Championship Platform
-                        </p>
-                    </div>
-
-                    <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.2)', margin: '12px 0' }}></div>
-
-                    <div style={{ marginBottom: '12px' }}>
-                        <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#E3F2FD', textAlign: 'center' }}>
-                            Development Team
-                        </h4>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            flexWrap: 'wrap',
-                            gap: '8px'
-                        }}>
-                            {['Nishchay Chaudhary', 'Sachin Kumar', 'Ronak Bagri', 'Sunny Kumar', 'Anish Kumar'].map(name => (
-                                <div key={name} style={{ 
-                                    fontSize: '12px', 
-                                    padding: '4px 12px', 
-                                    background: 'rgba(255, 255, 255, 0.1)', 
-                                    borderRadius: '4px' 
-                                }}>
-                                    {name}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.2)', margin: '12px 0' }}></div>
-
-                    <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        alignItems: 'center',
-                        fontSize: '11px',
-                        flexWrap: 'wrap',
-                        gap: '15px',
-                        textAlign: 'center'
-                    }}>
-                        <div>
-                            <span style={{ color: '#E3F2FD' }}>Email: </span>
-                            <span>support@inter-iit-sports.edu</span>
-                        </div>
-                        <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
-                        <div>
-                            <span style={{ color: '#E3F2FD' }}>Repository: </span>
-                            <span>github.com/inter-iit-sports</span>
-                        </div>
-                        <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
-                        <div style={{ color: '#E3F2FD' }}>
-                            © 2025 Inter-IIT Sports
-                        </div>
-                    </div>
-                </div>
-            </footer>
-
         </>
     );
 }

@@ -15,15 +15,15 @@ function App() {
                 {/* Navigation Header */}
                 <header style={headerStyle}>
                     <div style={logoStyle}>
-                        🏆 Inter-IIT Sports Management System
+                        Inter-IIT Sports Management System
                     </div>
                     <nav style={navStyle}>
-                        <Link to="/" style={linkStyle}>🏠 Dashboard</Link>
-                        <Link to="/participants" style={linkStyle}>👥 Participants</Link>
-                        <Link to="/events" style={linkStyle}>📅 Events</Link>
-                        <Link to="/teams" style={linkStyle}>🤝 Teams</Link> {/* NEW */}
-                        <Link to="/logistics" style={linkStyle}>📦 Logistics</Link>
-                        <Link to="/financials" style={linkStyle}>💰 Financials</Link>
+                        <Link to="/" style={linkStyle}>Dashboard</Link>
+                        <Link to="/participants" style={linkStyle}>Participants</Link>
+                        <Link to="/events" style={linkStyle}>Events</Link>
+                        <Link to="/teams" style={linkStyle}>Teams</Link> {/* NEW */}
+                        <Link to="/logistics" style={linkStyle}>Logistics</Link>
+                        <Link to="/financials" style={linkStyle}>Others</Link>
                     </nav>
                 </header>
 
@@ -40,6 +40,80 @@ function App() {
                     </Routes>
                 </main>
             </div>
+            {/* FOOTER - FIXED VERSION - No Overflow, No White Space */}
+            <footer style={{
+                background: '#1565C0',
+                color: '#ffffff',
+                padding: '20px 0 10px 0',
+                marginTop: '40px'
+            }}>
+                <div style={{
+                    maxWidth: '1300px',   // <- Set this to match your header/container/card's maxWidth
+                    margin: '0 auto',
+                    padding: '0 20px',
+                    boxSizing: 'border-box'
+                }}>
+                    <div style={{ marginBottom: '12px', textAlign: 'center' }}>
+                        <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 3px 0' }}>
+                            Inter IIT Sports Management System
+                        </h3>
+                        <p style={{ fontSize: '12px', margin: 0, color: '#E3F2FD', fontStyle: 'italic' }}>
+                            Inter-IIT Tech Meet 2025
+                        </p>
+                    </div>
+
+                    <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.2)', margin: '12px 0' }}></div>
+
+                    <div style={{ marginBottom: '12px' }}>
+                        <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#E3F2FD', textAlign: 'center' }}>
+                            Development Team
+                        </h4>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            flexWrap: 'wrap',
+                            gap: '8px'
+                        }}>
+                            {['Ronak Bagri','Nishchay Chaudhary', 'Sachin Kumar', 'Sunny Kumar', 'Anish Kumar'].map(name => (
+                                <div key={name} style={{ 
+                                    fontSize: '12px', 
+                                    padding: '4px 12px', 
+                                    background: 'rgba(255, 255, 255, 0.1)', 
+                                    borderRadius: '4px' 
+                                }}>
+                                    {name}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.2)', margin: '12px 0' }}></div>
+
+                    <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'center',
+                        fontSize: '11px',
+                        flexWrap: 'wrap',
+                        gap: '15px',
+                        textAlign: 'center'
+                    }}>
+                        <div>
+                            <span style={{ color: '#E3F2FD' }}>Email: </span>
+                            <span>support@inter-iit-sports.edu</span>
+                        </div>
+                        <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
+                        <div>
+                            <span style={{ color: '#E3F2FD' }}>Repository: </span>
+                            <span>https://github.com/nishchaychaudhary1729/interiit-sports-management-system</span>
+                        </div>
+                        <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
+                        <div style={{ color: '#E3F2FD' }}>
+                            © 2025 Inter-IIT Sports
+                        </div>
+                    </div>
+                </div>
+            </footer>
         </Router>
     );
 }

@@ -38,7 +38,7 @@ function LogisticsManagement() {
 
   return (
     <div style={{ padding: '0px' }}>
-      <h2>📦 Logistics & Inventory Management</h2>
+      <h2>Logistics & Inventory Management</h2>
       
       <div style={{ marginBottom: '20px' }}>
         <button style={tabButtonStyle('staff')} onClick={() => setActiveTab('staff')}>

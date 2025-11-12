@@ -38,7 +38,7 @@ function FinancialsAndIncidents() {
 
   return (
     <div style={{ padding: '0px' }}>
-      <h2>💰 Financial Tracking & Incident Log</h2>
+      <h2>Financial Tracking & Incident Log</h2>
       
       <div style={{ marginBottom: '20px' }}>
         <button style={tabButtonStyle('financials')} onClick={() => setActiveTab('financials')}>
