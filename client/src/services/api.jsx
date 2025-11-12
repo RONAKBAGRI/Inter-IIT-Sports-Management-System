@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Ensure this matches your Node.js server port (default 5000)
-const API_BASE_URL = 'http://localhost:5000/api'; 
+const API_BASE_URL = 'https://inter-iit-sports-management-system.vercel.app/api'; 
 
 // --- PARTICIPANT API (Existing Logic) ---
 
