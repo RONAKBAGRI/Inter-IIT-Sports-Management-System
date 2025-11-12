@@ -9,14 +9,15 @@ const db = require('../db');
 // 1. Fetch All Transactions (READ)
 router.get('/transactions', async (req, res) => {
     try {
+        // Query FIX: Changed table names to lowercase
         const [transactions] = await db.query(`
             SELECT 
                 FT.Transaction_ID, FT.Amount, FT.Transaction_Date, FT.Payment_Status, FT.Type,
                 P.Name AS Participant_Name, P.Participant_ID,
                 E.Name AS Event_Name
-            FROM Financial_Transactions FT
-            JOIN Participants P ON FT.Participant_ID = P.Participant_ID
-            JOIN Events E ON FT.Event_ID = E.Event_ID
+            FROM financial_transactions FT
+            JOIN participants P ON FT.Participant_ID = P.Participant_ID
+            JOIN events E ON FT.Event_ID = E.Event_ID
             ORDER BY FT.Transaction_Date DESC
         `);
         res.json(transactions);
@@ -36,11 +37,13 @@ router.post('/transactions', async (req, res) => {
 
     try {
         // ✅ FIXED: Get next Transaction_ID manually
-        const [maxIdResult] = await db.query('SELECT IFNULL(MAX(Transaction_ID), 0) + 1 as nextId FROM Financial_Transactions');
+        // Query FIX: Changed table names to lowercase
+        const [maxIdResult] = await db.query('SELECT IFNULL(MAX(Transaction_ID), 0) + 1 as nextId FROM financial_transactions');
         const nextTransactionId = maxIdResult[0].nextId;
 
+        // Query FIX: Changed table names to lowercase
         const query = `
-            INSERT INTO Financial_Transactions 
+            INSERT INTO financial_transactions 
             (Transaction_ID, Participant_ID, Event_ID, Amount, Transaction_Date, Payment_Status, Type)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
@@ -65,14 +68,15 @@ router.post('/transactions', async (req, res) => {
 // 3. Fetch All Incident Reports (READ)
 router.get('/incidents', async (req, res) => {
     try {
+        // Query FIX: Changed table names to lowercase
         const [reports] = await db.query(`
             SELECT 
                 IR.Report_ID, IR.Time, IR.Description, IR.Action_taken, IR.Severity,
                 P.Name AS Participant_Name, P.Participant_ID,
                 S.Name AS Staff_Reporter
-            FROM Incident_Reports IR
-            JOIN Staff S ON IR.Staff_ID = S.Staff_ID
-            LEFT JOIN Participants P ON IR.Participant_ID = P.Participant_ID
+            FROM incident_reports IR
+            JOIN staff S ON IR.Staff_ID = S.Staff_ID
+            LEFT JOIN participants P ON IR.Participant_ID = P.Participant_ID
             ORDER BY IR.Time DESC
         `);
         res.json(reports);
@@ -92,11 +96,13 @@ router.post('/incidents', async (req, res) => {
 
     try {
         // ✅ FIXED: Get next Report_ID manually
-        const [maxIdResult] = await db.query('SELECT IFNULL(MAX(Report_ID), 0) + 1 as nextId FROM Incident_Reports');
+        // Query FIX: Changed table names to lowercase
+        const [maxIdResult] = await db.query('SELECT IFNULL(MAX(Report_ID), 0) + 1 as nextId FROM incident_reports');
         const nextReportId = maxIdResult[0].nextId;
 
+        // Query FIX: Changed table names to lowercase
         const query = `
-            INSERT INTO Incident_Reports 
+            INSERT INTO incident_reports 
             (Report_ID, Participant_ID, Staff_ID, Time, Description, Severity, Action_taken)
             VALUES (?, ?, ?, NOW(), ?, ?, ?)
         `;

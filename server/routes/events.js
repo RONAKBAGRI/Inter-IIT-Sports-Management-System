@@ -9,12 +9,13 @@ const db = require('../db');
 // 1. Fetch Event List (Individual and Team)
 router.get('/data/events-list', async (req, res) => {
     try {
+        // Query FIX: Changed table names to lowercase
         const [events] = await db.query(`
             SELECT 
                 E.Event_ID, E.Name AS Event_Name, E.Gender, E.Registration_Fee,
                 S.Name AS Sport_Name, S.Type AS Sport_Type
-            FROM Events E
-            JOIN Sports S ON E.Sport_ID = S.Sport_ID
+            FROM events E
+            JOIN sports S ON E.Sport_ID = S.Sport_ID
             ORDER BY S.Type DESC, E.Name
         `);
         res.json(events);
@@ -27,14 +28,15 @@ router.get('/data/events-list', async (req, res) => {
 // 2. Fetch Teams List (for team assignment lookup)
 router.get('/data/teams-list', async (req, res) => {
     try {
+        // Query FIX: Changed table names to lowercase
         const [teams] = await db.query(`
             SELECT 
                 T.Team_ID, T.Team_Name, T.Is_Active,
                 I.Short_Name AS Institute,
                 E.Name AS Event_Name
-            FROM Teams T
-            JOIN Institutes I ON T.Institute_ID = I.Institute_ID
-            JOIN Events E ON T.Event_ID = E.Event_ID
+            FROM teams T
+            JOIN institutes I ON T.Institute_ID = I.Institute_ID
+            JOIN events E ON T.Event_ID = E.Event_ID
             WHERE T.Is_Active = 1
             ORDER BY I.Short_Name, E.Name
         `);
@@ -48,7 +50,8 @@ router.get('/data/teams-list', async (req, res) => {
 // 3. Fetch Venues List
 router.get('/data/venues-list', async (req, res) => {
     try {
-        const [venues] = await db.query('SELECT Venue_ID, Name FROM Venues ORDER BY Name');
+        // Query FIX: Changed table names to lowercase
+        const [venues] = await db.query('SELECT Venue_ID, Name FROM venues ORDER BY Name');
         res.json(venues.map(v => ({ Venue_ID: v.Venue_ID, Name: v.Name })));
     } catch (err) {
         console.error('Error fetching venue list:', err);
@@ -72,24 +75,28 @@ router.post('/matches', async (req, res) => {
         await connection.beginTransaction();
 
         // ✅ FIXED: Get next Match_ID manually
-        const [maxIdResult] = await connection.query('SELECT IFNULL(MAX(Match_ID), 0) + 1 as nextId FROM Matches');
+        // Query FIX: Changed table names to lowercase
+        const [maxIdResult] = await connection.query('SELECT IFNULL(MAX(Match_ID), 0) + 1 as nextId FROM matches');
         const nextMatchId = maxIdResult[0].nextId;
 
         // 1. Insert into Matches table with manual Match_ID
+        // Query FIX: Changed table names to lowercase
         const matchQuery = `
-            INSERT INTO Matches 
+            INSERT INTO matches 
             (Match_ID, Event_ID, Venue_ID, Match_Date, Start_time, Match_Type, Status)
             VALUES (?, ?, ?, ?, ?, ?, 'Scheduled')
         `;
         await connection.query(matchQuery, [nextMatchId, eventId, venueId, matchDate, startTime, matchType]);
 
         // 2. Determine next available Match_Competitor_ID
-        const [lastCompetitor] = await connection.query('SELECT IFNULL(MAX(Match_Competitor_ID), 3070) + 1 as NextID FROM Match_Competitors');
+        // Query FIX: Changed table names to lowercase
+        const [lastCompetitor] = await connection.query('SELECT IFNULL(MAX(Match_Competitor_ID), 3070) + 1 as NextID FROM match_competitors');
         let nextCompetitorId = lastCompetitor[0].NextID;
 
         // 3. Insert Competitors
+        // Query FIX: Changed table names to lowercase
         const competitorQuery = `
-            INSERT INTO Match_Competitors 
+            INSERT INTO match_competitors 
             (Match_Competitor_ID, Match_ID, Team_ID, Participant_ID)
             VALUES (?, ?, ?, ?)
         `;
@@ -121,6 +128,7 @@ router.get('/matches', async (req, res) => {
     const { status = 'Scheduled' } = req.query;
     
     try {
+        // Query FIX: Changed table names to lowercase
         const [matches] = await db.query(`
             SELECT 
                 M.Match_ID, M.Start_time, M.Match_Type, M.Status, M.Score_Summary AS Final_Score,
@@ -129,12 +137,12 @@ router.get('/matches', async (req, res) => {
                 GROUP_CONCAT(CASE WHEN MC.Team_ID IS NOT NULL THEN T.Team_Name ELSE P.Name END ORDER BY MC.Match_Competitor_ID SEPARATOR ' vs ') AS Competitors,
                 GROUP_CONCAT(CASE WHEN MC.Team_ID IS NOT NULL THEN MC.Team_ID ELSE MC.Participant_ID END ORDER BY MC.Match_Competitor_ID) AS CompetitorIDs,
                 M.Winner_ID
-            FROM Matches M
-            JOIN Events E ON M.Event_ID = E.Event_ID
-            JOIN Venues V ON M.Venue_ID = V.Venue_ID
-            JOIN Match_Competitors MC ON M.Match_ID = MC.Match_ID
-            LEFT JOIN Teams T ON MC.Team_ID = T.Team_ID
-            LEFT JOIN Participants P ON MC.Participant_ID = P.Participant_ID
+            FROM matches M
+            JOIN events E ON M.Event_ID = E.Event_ID
+            JOIN venues V ON M.Venue_ID = V.Venue_ID
+            JOIN match_competitors MC ON M.Match_ID = MC.Match_ID
+            LEFT JOIN teams T ON MC.Team_ID = T.Team_ID
+            LEFT JOIN participants P ON MC.Participant_ID = P.Participant_ID
             WHERE M.Status = ?
             GROUP BY M.Match_ID, M.Start_time, E.Name, V.Name
             ORDER BY M.Start_time ASC
@@ -153,7 +161,6 @@ router.get('/matches', async (req, res) => {
     }
 });
 
-// 6. UPDATE Match Result (PUT /results/:matchId)
 // 6. UPDATE Match Result (PUT /results/:matchId) - ✅ FIXED
 router.put('/results/:matchId', async (req, res) => {
     const { matchId } = req.params;
@@ -169,14 +176,16 @@ router.put('/results/:matchId', async (req, res) => {
         await connection.beginTransaction();
 
         // 1. Update Matches table
+        // Query FIX: Changed table names to lowercase
         const updateMatchQuery = `
-            UPDATE Matches SET Status = 'Completed', Winner_ID = ?, Score_Summary = ? WHERE Match_ID = ?
+            UPDATE matches SET Status = 'Completed', Winner_ID = ?, Score_Summary = ? WHERE Match_ID = ?
         `;
         await connection.query(updateMatchQuery, [winnerId, finalScore, matchId]);
 
         // 2. Determine winner type
+        // Query FIX: Changed table names to lowercase
         const [competitors] = await connection.query(
-            'SELECT Team_ID, Participant_ID FROM Match_Competitors WHERE Match_ID = ? AND (Team_ID = ? OR Participant_ID = ?)', 
+            'SELECT Team_ID, Participant_ID FROM match_competitors WHERE Match_ID = ? AND (Team_ID = ? OR Participant_ID = ?)', 
             [matchId, winnerId, winnerId]
         );
 
@@ -192,12 +201,14 @@ router.put('/results/:matchId', async (req, res) => {
         }
 
         // ✅ FIXED: Get next Outcome_ID manually
-        const [maxOutcomeIdResult] = await connection.query('SELECT IFNULL(MAX(Outcome_ID), 0) + 1 as nextId FROM Match_Outcomes');
+        // Query FIX: Changed table names to lowercase
+        const [maxOutcomeIdResult] = await connection.query('SELECT IFNULL(MAX(Outcome_ID), 0) + 1 as nextId FROM match_outcomes');
         const nextOutcomeId = maxOutcomeIdResult[0].nextId;
 
         // 3. Insert Match_Outcomes with manual Outcome_ID
+        // Query FIX: Changed table names to lowercase
         const insertOutcomeQuery = `
-            INSERT INTO Match_Outcomes (Outcome_ID, Match_ID, Winning_Team_ID, Winning_Participant_ID, Final_Score)
+            INSERT INTO match_outcomes (Outcome_ID, Match_ID, Winning_Team_ID, Winning_Participant_ID, Final_Score)
             VALUES (?, ?, ?, ?, ?)
         `;
         await connection.query(insertOutcomeQuery, [nextOutcomeId, matchId, winningTeamId, winningParticipantId, finalScore]);
@@ -226,8 +237,9 @@ router.post('/register/individual', async (req, res) => {
     }
 
     try {
+        // Query FIX: Changed table names to lowercase
         const [result] = await db.query(
-            'INSERT INTO Event_Registrations (Participant_ID, Event_ID) VALUES (?, ?)',
+            'INSERT INTO event_registrations (Participant_ID, Event_ID) VALUES (?, ?)',
             [participantId, eventId]
         );
         res.status(201).json({
@@ -255,8 +267,9 @@ router.post('/register/team', async (req, res) => {
     }
 
     try {
+        // Query FIX: Changed table names to lowercase
         const [result] = await db.query(
-            'INSERT INTO Team_Members (Team_ID, Participant_ID, Role) VALUES (?, ?, ?)',
+            'INSERT INTO team_members (Team_ID, Participant_ID, Role) VALUES (?, ?, ?)',
             [teamId, participantId, role]
         );
         res.status(201).json({

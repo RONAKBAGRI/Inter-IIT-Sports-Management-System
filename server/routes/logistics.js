@@ -9,12 +9,13 @@ const db = require('../db');
 // 1. Fetch Staff Roster (READ)
 router.get('/staff', async (req, res) => {
     try {
+        // Query FIX: Changed table names to lowercase
         const [staff] = await db.query(`
             SELECT 
                 S.Staff_ID, S.Name, S.Date_of_Birth, S.Email, S.Phone,
                 R.Role_Name, R.Role_ID
-            FROM Staff S
-            JOIN Roles R ON S.Role_ID = R.Role_ID
+            FROM staff S
+            JOIN roles R ON S.Role_ID = R.Role_ID
             ORDER BY R.Role_Name, S.Name
         `);
         res.json(staff);
@@ -27,7 +28,8 @@ router.get('/staff', async (req, res) => {
 // 2. Fetch Roles Lookup (for staff creation/update dropdowns)
 router.get('/data/roles-list', async (req, res) => {
     try {
-        const [roles] = await db.query('SELECT Role_ID, Role_Name FROM Roles ORDER BY Role_Name');
+        // Query FIX: Changed table names to lowercase
+        const [roles] = await db.query('SELECT Role_ID, Role_Name FROM roles ORDER BY Role_Name');
         res.json(roles);
     } catch (err) {
         console.error('Error fetching roles lookup data:', err);
@@ -44,11 +46,13 @@ router.post('/staff', async (req, res) => {
     }
 
     try {
-        const [lastStaff] = await db.query('SELECT IFNULL(MAX(Staff_ID), 0) + 1 AS NextID FROM Staff');
+        // Query FIX: Changed table names to lowercase
+        const [lastStaff] = await db.query('SELECT IFNULL(MAX(Staff_ID), 0) + 1 AS NextID FROM staff');
         const nextStaffId = lastStaff[0].NextID;
 
+        // Query FIX: Changed table names to lowercase
         const query = `
-            INSERT INTO Staff
+            INSERT INTO staff
             (Staff_ID, Name, Date_of_Birth, Email, Phone, Role_ID)
             VALUES (?, ?, ?, ?, ?, ?)
         `;
@@ -76,12 +80,13 @@ router.post('/staff', async (req, res) => {
 // 4. Fetch Equipment Inventory (READ)
 router.get('/equipment/inventory', async (req, res) => {
     try {
+        // Query FIX: Changed table names to lowercase
         const [inventory] = await db.query(`
             SELECT 
                 EI.Item_ID, EI.Item_Code, EI.Status, EI.Conditions, EI.Purchase_Date,
                 ET.Type_Name
-            FROM Equipment_Items EI
-            JOIN Equipment_Types ET ON EI.Type_ID = ET.Type_ID
+            FROM equipment_items EI
+            JOIN equipment_types ET ON EI.Type_ID = ET.Type_ID
             ORDER BY ET.Type_Name, EI.Item_Code
         `);
         res.json(inventory);
@@ -94,16 +99,17 @@ router.get('/equipment/inventory', async (req, res) => {
 // 5. Fetch Equipment Checkouts (READ)
 router.get('/equipment/checkouts', async (req, res) => {
     try {
+        // Query FIX: Changed table names to lowercase
         const [checkouts] = await db.query(`
             SELECT 
                 EC.Checkout_ID, EC.Checkout_time, EC.Checkin_time,
                 S.Name AS Staff_Name,
                 EI.Item_Code,
                 ET.Type_Name
-            FROM Equipment_Checkouts EC
-            JOIN Staff S ON EC.Staff_ID = S.Staff_ID
-            JOIN Equipment_Items EI ON EC.Item_ID = EI.Item_ID
-            JOIN Equipment_Types ET ON EI.Type_ID = ET.Type_ID
+            FROM equipment_checkouts EC
+            JOIN staff S ON EC.Staff_ID = S.Staff_ID
+            JOIN equipment_items EI ON EC.Item_ID = EI.Item_ID
+            JOIN equipment_types ET ON EI.Type_ID = ET.Type_ID
             ORDER BY EC.Checkout_time DESC
         `);
         res.json(checkouts);
@@ -126,16 +132,19 @@ router.post('/equipment/checkout', async (req, res) => {
         connection = await db.getConnection();
         await connection.beginTransaction();
 
-        const [itemStatus] = await connection.query('SELECT Status FROM Equipment_Items WHERE Item_ID = ?', [itemId]);
+        // Query FIX: Changed table names to lowercase
+        const [itemStatus] = await connection.query('SELECT Status FROM equipment_items WHERE Item_ID = ?', [itemId]);
         if (itemStatus.length === 0 || itemStatus[0].Status !== 'Available') {
             await connection.rollback();
             return res.status(400).json({ message: 'Item is not available for checkout (Status must be "Available").' });
         }
 
-        await connection.query("UPDATE Equipment_Items SET Status = 'Issued' WHERE Item_ID = ?", [itemId]);
+        // Query FIX: Changed table names to lowercase
+        await connection.query("UPDATE equipment_items SET Status = 'Issued' WHERE Item_ID = ?", [itemId]);
 
+        // Query FIX: Changed table names to lowercase
         const checkoutQuery = `
-            INSERT INTO Equipment_Checkouts
+            INSERT INTO equipment_checkouts
             (Staff_ID, Item_ID, Checkout_time)
             VALUES (?, ?, NOW())
         `;
@@ -164,8 +173,9 @@ router.put('/equipment/checkin/:itemId', async (req, res) => {
         connection = await db.getConnection();
         await connection.beginTransaction();
 
+        // Query FIX: Changed table names to lowercase
         const [checkoutResult] = await connection.query(
-            'UPDATE Equipment_Checkouts SET Checkin_time = NOW() WHERE Item_ID = ? AND Checkin_time IS NULL ORDER BY Checkout_time DESC LIMIT 1',
+            'UPDATE equipment_checkouts SET Checkin_time = NOW() WHERE Item_ID = ? AND Checkin_time IS NULL ORDER BY Checkout_time DESC LIMIT 1',
             [itemId]
         );
 
@@ -174,7 +184,8 @@ router.put('/equipment/checkin/:itemId', async (req, res) => {
             return res.status(400).json({ message: 'No active checkout found for this item.' });
         }
 
-        await connection.query("UPDATE Equipment_Items SET Status = 'Available' WHERE Item_ID = ?", [itemId]);
+        // Query FIX: Changed table names to lowercase
+        await connection.query("UPDATE equipment_items SET Status = 'Available' WHERE Item_ID = ?", [itemId]);
 
         await connection.commit();
         res.json({ message: `Equipment ${itemId} checked in successfully.` });
@@ -192,7 +203,8 @@ router.put('/equipment/checkin/:itemId', async (req, res) => {
 // 8. Fetch Transport Routes (READ)
 router.get('/transport/routes', async (req, res) => {
     try {
-        const [routes] = await db.query('SELECT Route_ID, Route_Name, Description FROM Transport_Routes ORDER BY Route_ID');
+        // Query FIX: Changed table names to lowercase
+        const [routes] = await db.query('SELECT Route_ID, Route_Name, Description FROM transport_routes ORDER BY Route_ID');
         res.json(routes);
     } catch (err) {
         console.error('Error fetching transport routes:', err);
@@ -209,7 +221,8 @@ router.post('/transport/routes', async (req, res) => {
     }
 
     try {
-        const query = 'INSERT INTO Transport_Routes (Route_ID, Route_Name, Description) VALUES (?, ?, ?)';
+        // Query FIX: Changed table names to lowercase
+        const query = 'INSERT INTO transport_routes (Route_ID, Route_Name, Description) VALUES (?, ?, ?)';
         await db.query(query, [routeId, routeName, description || null]);
         res.status(201).json({ message: `Route ${routeName} created successfully.`, id: routeId });
     } catch (err) {
@@ -224,12 +237,13 @@ router.post('/transport/routes', async (req, res) => {
 // 9. Fetch Transport Vehicles (READ)
 router.get('/transport/vehicles', async (req, res) => {
     try {
+        // Query FIX: Changed table names to lowercase
         const [vehicles] = await db.query(`
             SELECT 
                 TV.Vehicle_ID, TV.Vehicle_Name, TV.License_plate, TV.Capacity, TV.Route_ID AS Default_Route_ID,
                 TR.Route_Name AS Default_Route_Name
-            FROM Transport_Vehicles TV
-            JOIN Transport_Routes TR ON TV.Route_ID = TR.Route_ID
+            FROM transport_vehicles TV
+            JOIN transport_routes TR ON TV.Route_ID = TR.Route_ID
             ORDER BY TV.Vehicle_Name
         `);
         res.json(vehicles);
@@ -248,7 +262,8 @@ router.post('/transport/vehicles', async (req, res) => {
     }
 
     try {
-        const query = 'INSERT INTO Transport_Vehicles (Vehicle_ID, Vehicle_Name, License_plate, Capacity, Route_ID) VALUES (?, ?, ?, ?, ?)';
+        // Query FIX: Changed table names to lowercase
+        const query = 'INSERT INTO transport_vehicles (Vehicle_ID, Vehicle_Name, License_plate, Capacity, Route_ID) VALUES (?, ?, ?, ?, ?)';
         await db.query(query, [vehicleId, vehicleName, licensePlate, capacity, defaultRouteId]);
         res.status(201).json({ message: `Vehicle ${vehicleName} added successfully.`, id: vehicleId });
     } catch (err) {
@@ -263,16 +278,17 @@ router.post('/transport/vehicles', async (req, res) => {
 // 10. Fetch Transport Schedules (READ)
 router.get('/transport/schedules', async (req, res) => {
     try {
+        // Query FIX: Changed table names to lowercase
         const [schedules] = await db.query(`
             SELECT 
                 TS.Schedule_ID, TS.Departure_time,
                 TR.Route_Name,
                 S.Name AS Staff_Driver,
                 TV.Vehicle_Name, TV.License_plate
-            FROM Transport_Schedules TS
-            JOIN Transport_Routes TR ON TS.Route_ID = TR.Route_ID
-            JOIN Staff S ON TS.Staff_ID = S.Staff_ID
-            JOIN Transport_Vehicles TV ON TS.Vehicle_ID = TV.Vehicle_ID
+            FROM transport_schedules TS
+            JOIN transport_routes TR ON TS.Route_ID = TR.Route_ID
+            JOIN staff S ON TS.Staff_ID = S.Staff_ID
+            JOIN transport_vehicles TV ON TS.Vehicle_ID = TV.Vehicle_ID
             ORDER BY TS.Departure_time DESC
         `);
         res.json(schedules);
@@ -292,10 +308,12 @@ router.post('/transport/schedules', async (req, res) => {
 
     try {
         // ✅ FIXED: Get next Schedule_ID manually
-        const [maxIdResult] = await db.query('SELECT IFNULL(MAX(Schedule_ID), 0) + 1 as nextId FROM Transport_Schedules');
+        // Query FIX: Changed table names to lowercase
+        const [maxIdResult] = await db.query('SELECT IFNULL(MAX(Schedule_ID), 0) + 1 as nextId FROM transport_schedules');
         const nextScheduleId = maxIdResult[0].nextId;
 
-        const query = 'INSERT INTO Transport_Schedules (Schedule_ID, Staff_ID, Route_ID, Vehicle_ID, Departure_time) VALUES (?, ?, ?, ?, ?)';
+        // Query FIX: Changed table names to lowercase
+        const query = 'INSERT INTO transport_schedules (Schedule_ID, Staff_ID, Route_ID, Vehicle_ID, Departure_time) VALUES (?, ?, ?, ?, ?)';
         await db.query(query, [nextScheduleId, staffId, routeId, vehicleId, departureTime]);
         
         res.status(201).json({ message: `Schedule ID ${nextScheduleId} created successfully.`, id: nextScheduleId });

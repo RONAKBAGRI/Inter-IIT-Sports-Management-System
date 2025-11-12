@@ -7,12 +7,13 @@ const db = require('../db');
 router.get('/standings', async (req, res) => {
     try {
         // Query FIX: Changed alias from IS to INST_STAND to avoid keyword conflict.
+        // Query FIX: Changed table names to lowercase
         const [standings] = await db.query(`
             SELECT
                 I.Short_Name AS Institute,
                 INST_STAND.Total_points
-            FROM Institute_Standings AS INST_STAND
-            JOIN Institutes I ON INST_STAND.Institute_ID = I.Institute_ID
+            FROM institute_standings AS INST_STAND
+            JOIN institutes I ON INST_STAND.Institute_ID = I.Institute_ID
             ORDER BY INST_STAND.Total_points DESC, I.Short_Name
         `);
         res.json(standings);
@@ -25,6 +26,7 @@ router.get('/standings', async (req, res) => {
 // 2. Fetch Recent Match Results (for quick glance)
 router.get('/recent-results', async (req, res) => {
     try {
+        // Query FIX: Changed table names to lowercase
         const [results] = await db.query(`
             SELECT
                 M.Match_ID,
@@ -33,9 +35,9 @@ router.get('/recent-results', async (req, res) => {
                 DATE_FORMAT(M.Match_Date, '%Y-%m-%d') AS Match_Date,
                 V.Name AS Venue_Name,
                 M.Status
-            FROM Matches M
-            JOIN Events E ON M.Event_ID = E.Event_ID
-            JOIN Venues V ON M.Venue_ID = V.Venue_ID
+            FROM matches M
+            JOIN events E ON M.Event_ID = E.Event_ID
+            JOIN venues V ON M.Venue_ID = V.Venue_ID
             WHERE M.Status = 'Completed'
             ORDER BY M.Match_Date DESC, M.Start_time DESC
             LIMIT 5

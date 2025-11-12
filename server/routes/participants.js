@@ -7,9 +7,10 @@ const db = require('../db');
 // Fetches Institutes, Hostels, and Messes for use in the creation form
 router.get('/data/lookup', async (req, res) => {
     try {
-        const [institutes] = await db.query('SELECT Institute_ID, Name, Short_Name FROM Institutes');
-        const [hostels] = await db.query('SELECT Hostel_ID, Hostel_Name, Institute_ID FROM Hostels');
-        const [messes] = await db.query('SELECT Mess_ID, Mess_Name, Institute_ID FROM Messes');
+        // Query FIX: Changed table names to lowercase
+        const [institutes] = await db.query('SELECT Institute_ID, Name, Short_Name FROM institutes');
+        const [hostels] = await db.query('SELECT Hostel_ID, Hostel_Name, Institute_ID FROM hostels');
+        const [messes] = await db.query('SELECT Mess_ID, Mess_Name, Institute_ID FROM messes');
         res.json({ institutes, hostels, messes });
     } catch (err) {
         console.error('Error fetching lookup data:', err);
@@ -24,16 +25,17 @@ router.get('/data/lookup', async (req, res) => {
 router.get('/', async (req, res) => {
     // **NEW LOGIC START**
     const { search } = req.query; // Get search term from query parameters
+    // Query FIX: Changed table names to lowercase
     let sqlQuery = `
         SELECT 
             P.Participant_ID, P.Name, P.DOB, P.Gender, P.Email,
             I.Short_Name AS Institute, 
             H.Hostel_Name AS Hostel, 
             M.Mess_Name AS Mess
-        FROM Participants P
-        JOIN Institutes I ON P.Institute_ID = I.Institute_ID
-        JOIN Hostels H ON P.Hostel_ID = H.Hostel_ID
-        JOIN Messes M ON P.Mess_ID = M.Mess_ID
+        FROM participants P
+        JOIN institutes I ON P.Institute_ID = I.Institute_ID
+        JOIN hostels H ON P.Hostel_ID = H.Hostel_ID
+        JOIN messes M ON P.Mess_ID = M.Mess_ID
     `;
     const queryParams = [];
 
@@ -70,8 +72,9 @@ router.post('/', async (req, res) => {
     }
 
     try {
+        // Query FIX: Changed table names to lowercase
         const query = `
-            INSERT INTO Participants 
+            INSERT INTO participants 
             (Name, DOB, Gender, Email, Hostel_ID, Institute_ID, Mess_ID)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
@@ -98,8 +101,9 @@ router.put('/:id', async (req, res) => {
     const { name, email, hostelId, messId } = req.body;
     
     try {
+        // Query FIX: Changed table names to lowercase
         const query = `
-            UPDATE Participants 
+            UPDATE participants 
             SET Name = ?, Email = ?, Hostel_ID = ?, Mess_ID = ?
             WHERE Participant_ID = ?
         `;
@@ -121,7 +125,8 @@ router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     
     try {
-        const [result] = await db.query('DELETE FROM Participants WHERE Participant_ID = ?', [id]);
+        // Query FIX: Changed table names to lowercase
+        const [result] = await db.query('DELETE FROM participants WHERE Participant_ID = ?', [id]);
         
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Participant not found.' });
