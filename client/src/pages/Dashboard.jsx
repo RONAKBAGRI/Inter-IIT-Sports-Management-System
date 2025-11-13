@@ -1,28 +1,45 @@
 // client/src/pages/Dashboard.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { fetchStandings, fetchRecentResults, fetchUpcomingMatches } from '../services/api';
+// 🌟 1. Import the lookup fetcher
+import { fetchStandings, fetchRecentResults, fetchUpcomingMatches, fetchParticipantLookupData } from '../services/api';
 
 
 function Dashboard() {
     const [standings, setStandings] = useState([]);
     const [recentResults, setRecentResults] = useState([]);
-    const [upcomingMatches, setUpcomingMatches] = useState([]); // NEW STATE
+    const [upcomingMatches, setUpcomingMatches] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    // 🌟 2. Add state for the institute name map
+    const [instituteMap, setInstituteMap] = useState({});
 
 
     const loadData = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const [standingsData, resultsData, upcomingData] = await Promise.all([ // ADDED upcomingData
+            // 🌟 3. Fetch lookup data along with other data
+            const [standingsData, resultsData, upcomingData, lookupData] = await Promise.all([
                 fetchStandings(),
                 fetchRecentResults(),
-                fetchUpcomingMatches()
+                fetchUpcomingMatches(),
+                fetchParticipantLookupData() // Fetches { institutes, hostels, messes }
             ]);
+            
             setStandings(standingsData);
             setRecentResults(resultsData);
-            setUpcomingMatches(upcomingData); // Set new state
+            setUpcomingMatches(upcomingData);
+
+            // 🌟 4. Create the mapping from Short_Name to Name
+            const newMap = {};
+            if (lookupData.institutes) {
+                lookupData.institutes.forEach(inst => {
+                    // This creates an entry like: { "IITB": "Indian Institute of Technology Bombay" }
+                    newMap[inst.Short_Name] = inst.Name;
+                });
+            }
+            setInstituteMap(newMap); // Save the map to state
+
         } catch (err) {
             setError('Failed to load dashboard data from API. Check server and database connections.');
         } finally {
@@ -104,7 +121,12 @@ function Dashboard() {
                                             backgroundColor: index % 2 === 0 ? 'var(--color-white)' : '#f5f5f5' 
                                         }}>
                                             <td style={{...tableCellStyle, fontWeight: 'bold', backgroundColor: index === 0 ? '#ffeb3b80' : (index === 1 ? '#c0c0c080' : (index === 2 ? '#cd7f3280' : undefined))}}>{index + 1}</td>
-                                            <td style={tableCellStyle}>{s.Institute}</td>
+                                            
+                                            {/* 🌟 5. Use the map to show the full name */}
+                                            <td style={tableCellStyle}>
+                                                {instituteMap[s.Institute] || s.Institute}
+                                            </td>
+                                            
                                             <td style={{...tableCellStyle, textAlign: 'right', fontWeight: 'bold'}}>{s.Total_points}</td>
                                         </tr>
                                     ))}

@@ -63,6 +63,27 @@ router.post('/transactions', async (req, res) => {
     }
 });
 
+// 2.1. Delete Transaction (DELETE) - 🌟 NEW
+router.delete('/transactions/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Query FIX: Changed table names to lowercase
+        const [result] = await db.query('DELETE FROM financial_transactions WHERE Transaction_ID = ?', [id]);
+        
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Transaction not found.' });
+        }
+        res.json({ message: `Transaction ${id} deleted successfully.` });
+    } catch (err) {
+        console.error('Error deleting transaction:', err.message);
+        res.status(500).json({ 
+            message: 'Deletion failed. This transaction may be linked to other records.',
+            error: err.code 
+        });
+    }
+});
+
+
 // --- INCIDENT REPORTS ROUTES ---
 
 // 3. Fetch All Incident Reports (READ)
@@ -118,6 +139,26 @@ router.post('/incidents', async (req, res) => {
         res.status(500).json({
             message: 'Failed to create incident report.',
             error: err.code
+        });
+    }
+});
+
+// 4.1. Delete Incident (DELETE) - 🌟 NEW
+router.delete('/incidents/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Query FIX: Changed table names to lowercase
+        const [result] = await db.query('DELETE FROM incident_reports WHERE Report_ID = ?', [id]);
+        
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Incident report not found.' });
+        }
+        res.json({ message: `Incident report ${id} deleted successfully.` });
+    } catch (err) {
+        console.error('Error deleting incident:', err.message);
+        res.status(500).json({ 
+            message: 'Deletion failed. This incident may be linked to other records.',
+            error: err.code 
         });
     }
 });

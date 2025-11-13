@@ -1,6 +1,7 @@
 // client/src/components/logistics/StaffRoster.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { fetchStaffRoster, fetchRolesLookup, createStaffMember } from '../../services/api';
+// 🌟 Import deleteStaffMember
+import { fetchStaffRoster, fetchRolesLookup, createStaffMember, deleteStaffMember } from '../../services/api';
 
 // --- Staff Registration Form Component ---
 function StaffForm({ onStaffCreation, roles, onToggle }) {
@@ -87,8 +88,32 @@ function StaffRoster({ refreshKey, onStaffUpdate }) {
         loadData();
     }, [loadData, refreshKey]);
 
+    // 🌟 NEW Delete Handler
+    const handleDelete = async (id) => {
+        if (!window.confirm(`Are you sure you want to delete staff member ${id}? This may fail if they are linked to schedules or incidents.`)) {
+            return;
+        }
+        try {
+            const result = await deleteStaffMember(id);
+            alert(result.message);
+            loadData(); // Refresh the list
+        } catch (err) {
+            alert(`Error: ${err.message}`);
+        }
+    };
+
     const tableHeaderStyle = { padding: '12px 10px', textAlign: 'left', borderRight: '1px solid rgba(255,255,255,0.2)', fontWeight: '600' };
     const tableCellStyle = { padding: '10px', borderRight: '1px solid #ddd' };
+    // 🌟 NEW Style for delete button
+    const deleteButtonStyle = {
+        backgroundColor: 'var(--color-danger)',
+        color: 'var(--color-white)',
+        border: 'none',
+        padding: '5px 8px',
+        fontSize: '0.8em',
+        borderRadius: '4px',
+        cursor: 'pointer'
+    };
 
     if (loading) return <p>Loading Staff Roster...</p>;
     if (error) return <p style={{ color: 'var(--color-danger)', fontWeight: 'bold' }}>Error: {error}</p>;
@@ -115,6 +140,7 @@ function StaffRoster({ refreshKey, onStaffUpdate }) {
                             <th style={tableHeaderStyle}>Role</th>
                             <th style={tableHeaderStyle}>Email</th>
                             <th style={tableHeaderStyle}>Phone</th>
+                            <th style={tableHeaderStyle}>Actions</th> {/* 🌟 NEW Column */}
                         </tr>
                     </thead>
                     <tbody>
@@ -125,6 +151,15 @@ function StaffRoster({ refreshKey, onStaffUpdate }) {
                                 <td style={tableCellStyle}>{s.Role_Name}</td>
                                 <td style={tableCellStyle}>{s.Email}</td>
                                 <td style={tableCellStyle}>{s.Phone || 'N/A'}</td>
+                                {/* 🌟 NEW Cell */}
+                                <td style={tableCellStyle}>
+                                    <button 
+                                        onClick={() => handleDelete(s.Staff_ID)}
+                                        style={deleteButtonStyle}
+                                    >
+                                        Delete
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>

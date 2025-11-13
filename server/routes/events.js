@@ -288,4 +288,43 @@ router.post('/register/team', async (req, res) => {
     }
 });
 
+// 6.1. DELETE Match (DELETE /matches/:matchId) - 🌟 NEW
+router.delete('/matches/:matchId', async (req, res) => {
+    const { matchId } = req.params;
+
+    let connection;
+    try {
+        connection = await db.getConnection();
+        await connection.beginTransaction();
+
+        // Step 1: Delete from match_competitors
+        // Query FIX: Changed table names to lowercase
+        await connection.query('DELETE FROM match_competitors WHERE Match_ID = ?', [matchId]);
+        
+        // Step 2: Delete from match_outcomes (if any exist)
+        // Query FIX: Changed table names to lowercase
+        await connection.query('DELETE FROM match_outcomes WHERE Match_ID = ?', [matchId]);
+
+        // Step 3: Delete from matches
+        // Query FIX: Changed table names to lowercase
+        const [result] = await connection.query('DELETE FROM matches WHERE Match_ID = ?', [matchId]);
+
+        if (result.affectedRows === 0) {
+            await connection.rollback();
+            return res.status(404).json({ message: 'Match not found.' });
+        }
+
+        await connection.commit();
+        res.json({ message: `Match ${matchId} and all associated data deleted successfully.` });
+
+    } catch (err) {
+        if (connection) await connection.rollback();
+        console.error('Error deleting match:', err.message);
+        res.status(500).json({ message: 'Failed to delete match.', error: err.code });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+
 module.exports = router;

@@ -1,9 +1,11 @@
 // client/src/components/events/MatchResults.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { fetchMatches, updateMatchResult } from '../../services/api';
+// 🌟 Import deleteMatch
+import { fetchMatches, updateMatchResult, deleteMatch } from '../../services/api';
 
 // --- Match Row Component ---
-function MatchRow({ match, index, onUpdate, isTeamSport }) {
+// 🌟 Added onDelete prop
+function MatchRow({ match, index, onUpdate, isTeamSport, onDelete }) {
     const [finalScore, setFinalScore] = useState('');
     const [winnerId, setWinnerId] = useState('');
     const [isEditing, setIsEditing] = useState(false);
@@ -42,6 +44,18 @@ function MatchRow({ match, index, onUpdate, isTeamSport }) {
         );
     };
 
+    // 🌟 NEW Style for delete button
+    const deleteButtonStyle = {
+        backgroundColor: 'var(--color-danger)',
+        color: 'var(--color-white)',
+        border: 'none',
+        padding: '5px 8px',
+        fontSize: '0.8em',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        width: '100%' // Make it fill the cell
+    };
+
     return (
         <tr style={{ borderBottom: '1px solid #ddd', backgroundColor: index % 2 === 0 ? 'var(--color-white)' : '#f1f1f1' }}>
             <td style={tableCellStyle}>{match.Match_ID}</td>
@@ -67,11 +81,20 @@ function MatchRow({ match, index, onUpdate, isTeamSport }) {
                             <button onClick={() => setIsEditing(false)} style={{ backgroundColor: 'var(--color-danger)', padding: '5px', fontSize: '0.8em' }}>Cancel</button>
                         </div>
                     ) : (
-                        <button onClick={() => setIsEditing(true)} style={{ padding: '5px', fontSize: '0.8em' }}>Enter Result</button>
+                        <button onClick={() => setIsEditing(true)} style={{ padding: '5px', fontSize: '0.8em', width: '100%' }}>Enter Result</button>
                     )
                 ) : (
                     <span>{match.Final_Score} (Winner ID: {match.Winner_ID || 'N/A'})</span>
                 )}
+            </td>
+            {/* 🌟 NEW Actions Cell */}
+            <td style={tableCellStyle}>
+                 <button 
+                    onClick={() => onDelete(match.Match_ID)}
+                    style={deleteButtonStyle}
+                >
+                    Delete
+                </button>
             </td>
         </tr>
     );
@@ -115,6 +138,22 @@ function MatchResults({ refreshKey }) {
             setError(err.message || 'Failed to update result.');
         }
     };
+
+    // 🌟 NEW Delete Handler
+    const handleDelete = async (matchId) => {
+        if (!window.confirm(`Are you sure you want to delete Match ${matchId}? This will remove the match and all competitor data.`)) {
+            return;
+        }
+        setError(null);
+        try {
+            const result = await deleteMatch(matchId);
+            alert(result.message);
+            loadMatches(filterStatus); // Refresh the list
+        } catch (err) {
+            alert(`Error: ${err.message}`);
+            setError(err.message || 'Failed to delete match.');
+        }
+    };
     
     if (error) return <p style={{ color: 'var(--color-danger)', fontWeight: 'bold' }}>Error: {error}</p>;
 
@@ -150,6 +189,7 @@ function MatchResults({ refreshKey }) {
                                     <th style={tableHeaderStyle}>Date & Time</th>
                                     <th style={tableHeaderStyle}>Status</th>
                                     <th style={tableHeaderStyle}>Score</th>
+                                    <th style={tableHeaderStyle}>Actions</th> {/* 🌟 NEW Column */}
                                 </tr>
                             </thead>
                             <tbody>
@@ -160,6 +200,7 @@ function MatchResults({ refreshKey }) {
                                         index={index}
                                         onUpdate={handleUpdate}
                                         isTeamSport={m.isTeamSport}
+                                        onDelete={handleDelete} // 🌟 Pass handler
                                     />
                                 ))}
                             </tbody>

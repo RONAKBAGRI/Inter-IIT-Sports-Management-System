@@ -1,8 +1,10 @@
 // client/src/components/financials/FinancialTracker.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { fetchTransactions, createTransaction, fetchParticipants, fetchEventLookupData } from '../../services/api';
+// 🌟 Import deleteTransaction
+import { fetchTransactions, createTransaction, fetchParticipants, fetchEventLookupData, deleteTransaction } from '../../services/api';
 
 // --- Transaction Form Component ---
+// (No changes to this sub-component)
 function TransactionForm({ onCreation }) {
     const [formData, setFormData] = useState({ 
         participantId: '', eventId: '', amount: '', transactionDate: new Date().toISOString().slice(0, 10), 
@@ -130,8 +132,32 @@ function FinancialTracker({ refreshKey, onUpdate }) {
         loadTransactions();
     }, [loadTransactions, refreshKey]);
 
+    // 🌟 NEW Delete Handler
+    const handleDelete = async (id) => {
+        if (!window.confirm(`Are you sure you want to delete transaction ${id}?`)) {
+            return;
+        }
+        try {
+            const result = await deleteTransaction(id);
+            alert(result.message);
+            loadTransactions(); // Refresh the list
+        } catch (err) {
+            alert(`Error: ${err.message}`);
+        }
+    };
+
     const tableHeaderStyle = { padding: '12px 10px', textAlign: 'left', borderRight: '1px solid rgba(255,255,255,0.2)', fontWeight: '600' };
     const tableCellStyle = { padding: '10px', borderRight: '1px solid #ddd' };
+    // 🌟 NEW Style for delete button
+    const deleteButtonStyle = {
+        backgroundColor: 'var(--color-danger)',
+        color: 'var(--color-white)',
+        border: 'none',
+        padding: '5px 8px',
+        fontSize: '0.8em',
+        borderRadius: '4px',
+        cursor: 'pointer'
+    };
 
     const getStatusColor = (status) => {
         switch(status) {
@@ -155,6 +181,7 @@ function FinancialTracker({ refreshKey, onUpdate }) {
                 {!showForm && (
                     <button onClick={() => setShowForm(true)} style={{ backgroundColor: 'var(--color-success)' }}>+ Record New Transaction</button>
                 )}
+                {/* 🌟 Pass onToggle to the form */}
                 {showForm && <TransactionForm onCreation={onUpdate} onToggle={() => setShowForm(false)} />}
             </div>
 
@@ -168,6 +195,7 @@ function FinancialTracker({ refreshKey, onUpdate }) {
                             <th style={tableHeaderStyle}>Type / Event</th>
                             <th style={tableHeaderStyle}>Amount</th>
                             <th style={tableHeaderStyle}>Status</th>
+                            <th style={tableHeaderStyle}>Actions</th> {/* 🌟 NEW Column */}
                         </tr>
                     </thead>
                     <tbody>
@@ -181,6 +209,15 @@ function FinancialTracker({ refreshKey, onUpdate }) {
                                 <td style={tableCellStyle}>₹{parseFloat(t.Amount).toFixed(2)}</td> 
                                 <td style={{...tableCellStyle, color: getStatusColor(t.Payment_Status), fontWeight: 'bold'}}>
                                     {t.Payment_Status.toUpperCase()}
+                                </td>
+                                {/* 🌟 NEW Cell */}
+                                <td style={tableCellStyle}>
+                                    <button 
+                                        onClick={() => handleDelete(t.Transaction_ID)}
+                                        style={deleteButtonStyle}
+                                    >
+                                        Delete
+                                    </button>
                                 </td>
                             </tr>
                         ))}

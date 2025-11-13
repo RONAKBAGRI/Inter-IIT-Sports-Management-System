@@ -120,7 +120,7 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// 4. DELETE Participant (DELETE) - Placeholder
+// 4. DELETE Participant (DELETE) - 🌟 FINALIZED
 router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     
@@ -131,12 +131,21 @@ router.delete('/:id', async (req, res) => {
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Participant not found.' });
         }
-        // Note: Delete might fail due to FK constraints (e.g., still in a team)
+        
         res.json({ message: `Participant ${id} deleted successfully.` });
     } catch (err) {
         console.error('Error deleting participant:', err.message);
-        res.status(400).json({ 
-            message: 'Deletion failed due to existing records (e.g., in Teams, Registrations). Remove those first.', 
+        
+        // Check for foreign key constraint violation
+        if (err.code === 'ER_ROW_IS_REFERENCED_2') {
+             return res.status(400).json({ 
+                message: 'Deletion failed. Participant is referenced in other records (e.g., Teams, Registrations, Incidents, or Transactions).',
+                error: err.code 
+            });
+        }
+        
+        res.status(500).json({ 
+            message: 'Deletion failed due to a database error.', 
             error: err.code 
         });
     }

@@ -1,7 +1,8 @@
 // client/src/services/logisticsService.js
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api/logistics';
+const API_BASE_URL = 'https://inter-iit-sports-management-system.vercel.app/api/logistics'; 
+// const API_BASE_URL = 'http://localhost:5000/api/logistics';
 
 export const logisticsService = {
     // Get all equipment types with counts

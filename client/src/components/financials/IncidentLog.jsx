@@ -1,8 +1,10 @@
 // client/src/components/financials/IncidentLog.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { createIncident, fetchIncidents, fetchParticipants, fetchStaffRoster } from '../../services/api';
+// 🌟 Import deleteIncident
+import { createIncident, fetchIncidents, fetchParticipants, fetchStaffRoster, deleteIncident } from '../../services/api';
 
 // --- Incident Filing Form Component ---
+// (No changes to this sub-component)
 function IncidentForm({ onCreation, onToggle }) {
     const [formData, setFormData] = useState({ 
         participantId: '', staffId: '', description: '', severity: 'Medium', actionTaken: '' 
@@ -124,8 +126,32 @@ function IncidentLog({ refreshKey, onUpdate }) {
         loadIncidents();
     }, [loadIncidents, refreshKey]);
 
+    // 🌟 NEW Delete Handler
+    const handleDelete = async (id) => {
+        if (!window.confirm(`Are you sure you want to delete incident report ${id}?`)) {
+            return;
+        }
+        try {
+            const result = await deleteIncident(id);
+            alert(result.message);
+            loadIncidents(); // Refresh the list
+        } catch (err) {
+            alert(`Error: ${err.message}`);
+        }
+    };
+
     const tableHeaderStyle = { padding: '12px 10px', textAlign: 'left', borderRight: '1px solid rgba(255,255,255,0.2)', fontWeight: '600' };
     const tableCellStyle = { padding: '10px', borderRight: '1px solid #ddd' };
+    // 🌟 NEW Style for delete button
+    const deleteButtonStyle = {
+        backgroundColor: 'var(--color-danger)',
+        color: 'var(--color-white)',
+        border: 'none',
+        padding: '5px 8px',
+        fontSize: '0.8em',
+        borderRadius: '4px',
+        cursor: 'pointer'
+    };
 
     const getSeverityColor = (severity) => {
         switch(severity) {
@@ -164,6 +190,7 @@ function IncidentLog({ refreshKey, onUpdate }) {
                             <th style={tableHeaderStyle}>Participant</th>
                             <th style={tableHeaderStyle}>Description</th>
                             <th style={tableHeaderStyle}>Action Taken</th>
+                            <th style={tableHeaderStyle}>Actions</th> {/* 🌟 NEW Column */}
                         </tr>
                     </thead>
                     <tbody>
@@ -176,6 +203,15 @@ function IncidentLog({ refreshKey, onUpdate }) {
                                 <td style={tableCellStyle}>{i.Participant_Name || 'N/A'}</td>
                                 <td style={{...tableCellStyle, maxWidth: '200px', whiteSpace: 'normal'}}>{i.Description}</td>
                                 <td style={tableCellStyle}>{i.Action_taken || 'PENDING'}</td>
+                                {/* 🌟 NEW Cell */}
+                                <td style={tableCellStyle}>
+                                    <button 
+                                        onClick={() => handleDelete(i.Report_ID)}
+                                        style={deleteButtonStyle}
+                                    >
+                                        Delete
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>

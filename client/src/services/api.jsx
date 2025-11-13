@@ -3,6 +3,7 @@ import axios from 'axios';
 
 // Ensure this matches your Node.js server port (default 5000)
 const API_BASE_URL = 'https://inter-iit-sports-management-system.vercel.app/api'; 
+// const API_BASE_URL = 'http://localhost:5000/api';
 
 // --- PARTICIPANT API (Existing Logic) ---
 
@@ -36,6 +37,29 @@ export const createParticipant = async (participantData) => {
         return response.data;
     } catch (error) {
         console.error('API Error: Failed to create participant.', error.response.data);
+        throw error.response.data;
+    }
+};
+
+// 🌟 NEW
+export const deleteParticipant = async (id) => {
+    try {
+        const response = await axios.delete(`${API_BASE_URL}/participants/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Failed to delete participant.', error.response.data);
+        throw error.response.data;
+    }
+};
+
+
+// 🌟 NEW
+export const deleteMatch = async (id) => {
+    try {
+        const response = await axios.delete(`${API_BASE_URL}/events/matches/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Failed to delete match.', error.response.data);
         throw error.response.data;
     }
 };
@@ -174,6 +198,16 @@ export const createStaffMember = async (staffData) => {
     }
 };
 
+// 🌟 NEW
+export const deleteStaffMember = async (id) => {
+    try {
+        const response = await axios.delete(`${API_BASE_URL}/logistics/staff/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Failed to delete staff member.', error.response.data);
+        throw error.response.data;
+    }
+};
 
 
 export const fetchEquipmentInventory = async () => {
@@ -280,6 +314,39 @@ export const createTransportSchedule = async (scheduleData) => {
     }
 };
 
+// 🌟 NEW
+export const deleteTransportRoute = async (id) => {
+    try {
+        const response = await axios.delete(`${API_BASE_URL}/logistics/transport/routes/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Route deletion failed.', error.response.data);
+        throw error.response.data;
+    }
+};
+
+// 🌟 NEW
+export const deleteTransportVehicle = async (id) => {
+    try {
+        const response = await axios.delete(`${API_BASE_URL}/logistics/transport/vehicles/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Vehicle deletion failed.', error.response.data);
+        throw error.response.data;
+    }
+};
+
+// 🌟 NEW
+export const deleteTransportSchedule = async (id) => {
+    try {
+        const response = await axios.delete(`${API_BASE_URL}/logistics/transport/schedules/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Schedule deletion failed.', error.response.data);
+        throw error.response.data;
+    }
+};
+
 
 export const fetchTransactions = async () => {
     try {
@@ -301,6 +368,17 @@ export const createTransaction = async (transactionData) => {
     }
 };
 
+// 🌟 NEW
+export const deleteTransaction = async (id) => {
+    try {
+        const response = await axios.delete(`${API_BASE_URL}/financials/transactions/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Failed to delete transaction.', error.response.data);
+        throw error.response.data;
+    }
+};
+
 export const fetchIncidents = async () => {
     try {
         const response = await axios.get(`${API_BASE_URL}/financials/incidents`);
@@ -317,6 +395,17 @@ export const createIncident = async (incidentData) => {
         return response.data;
     } catch (error) {
         console.error('API Error: Failed to create incident.', error.response.data);
+        throw error.response.data;
+    }
+};
+
+// 🌟 NEW
+export const deleteIncident = async (id) => {
+    try {
+        const response = await axios.delete(`${API_BASE_URL}/financials/incidents/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Failed to delete incident.', error.response.data);
         throw error.response.data;
     }
 };
@@ -414,4 +503,3 @@ export const fetchTeamDetails = async (teamId) => {
         throw error;
     }
 };
-

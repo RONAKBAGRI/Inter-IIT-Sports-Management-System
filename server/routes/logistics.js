@@ -75,6 +75,33 @@ router.post('/staff', async (req, res) => {
     }
 });
 
+// 3.1. Delete Staff Member (DELETE) - 🌟 NEW
+router.delete('/staff/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Query FIX: Changed table names to lowercase
+        const [result] = await db.query('DELETE FROM staff WHERE Staff_ID = ?', [id]);
+        
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Staff member not found.' });
+        }
+        res.json({ message: `Staff member ${id} deleted successfully.` });
+    } catch (err) {
+        console.error('Error deleting staff:', err.message);
+        if (err.code === 'ER_ROW_IS_REFERENCED_2') {
+             return res.status(400).json({ 
+                message: 'Deletion failed. Staff member is referenced in other records (e.g., Incident Reports, Schedules, Checkouts).',
+                error: err.code 
+            });
+        }
+        res.status(500).json({ 
+            message: 'Deletion failed due to a database error.',
+            error: err.code 
+        });
+    }
+});
+
+
 // --- EQUIPMENT ROUTES ---
 
 // 4. Fetch Equipment Inventory (READ)
@@ -234,6 +261,33 @@ router.post('/transport/routes', async (req, res) => {
     }
 });
 
+// 8.2. Delete Route (DELETE) - 🌟 NEW
+router.delete('/transport/routes/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Query FIX: Changed table names to lowercase
+        const [result] = await db.query('DELETE FROM transport_routes WHERE Route_ID = ?', [id]);
+        
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Route not found.' });
+        }
+        res.json({ message: `Route ${id} deleted successfully.` });
+    } catch (err) {
+        console.error('Error deleting route:', err.message);
+        if (err.code === 'ER_ROW_IS_REFERENCED_2') {
+             return res.status(400).json({ 
+                message: 'Deletion failed. Route is referenced by a Vehicle or Schedule.',
+                error: err.code 
+            });
+        }
+        res.status(500).json({ 
+            message: 'Deletion failed due to a database error.',
+            error: err.code 
+        });
+    }
+});
+
+
 // 9. Fetch Transport Vehicles (READ)
 router.get('/transport/vehicles', async (req, res) => {
     try {
@@ -272,6 +326,32 @@ router.post('/transport/vehicles', async (req, res) => {
         }
         console.error('Error creating vehicle:', err.message);
         res.status(500).json({ message: 'Failed to create vehicle.' });
+    }
+});
+
+// 9.2. Delete Vehicle (DELETE) - 🌟 NEW
+router.delete('/transport/vehicles/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Query FIX: Changed table names to lowercase
+        const [result] = await db.query('DELETE FROM transport_vehicles WHERE Vehicle_ID = ?', [id]);
+        
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Vehicle not found.' });
+        }
+        res.json({ message: `Vehicle ${id} deleted successfully.` });
+    } catch (err) {
+        console.error('Error deleting vehicle:', err.message);
+        if (err.code === 'ER_ROW_IS_REFERENCED_2') {
+             return res.status(400).json({ 
+                message: 'Deletion failed. Vehicle is referenced in a Schedule.',
+                error: err.code 
+            });
+        }
+        res.status(500).json({ 
+            message: 'Deletion failed due to a database error.',
+            error: err.code 
+        });
     }
 });
 
@@ -320,6 +400,26 @@ router.post('/transport/schedules', async (req, res) => {
     } catch (err) {
         console.error('Error creating schedule:', err.message);
         res.status(500).json({ message: 'Failed to create schedule.' });
+    }
+});
+
+// 10.2. Delete Schedule (DELETE) - 🌟 NEW
+router.delete('/transport/schedules/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Query FIX: Changed table names to lowercase
+        const [result] = await db.query('DELETE FROM transport_schedules WHERE Schedule_ID = ?', [id]);
+        
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Schedule not found.' });
+        }
+        res.json({ message: `Schedule ${id} deleted successfully.` });
+    } catch (err) {
+        console.error('Error deleting schedule:', err.message);
+        res.status(500).json({ 
+            message: 'Deletion failed due to a database error.',
+            error: err.code 
+        });
     }
 });
 

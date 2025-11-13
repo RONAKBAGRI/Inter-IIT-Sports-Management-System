@@ -1,8 +1,15 @@
 // client/src/components/logistics/TransportScheduler.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { fetchTransportRoutes, fetchTransportVehicles, fetchTransportSchedules, createTransportRoute, createTransportVehicle, createTransportSchedule, fetchStaffRoster } from '../../services/api';
+// 🌟 Import delete functions
+import { 
+    fetchTransportRoutes, fetchTransportVehicles, fetchTransportSchedules, 
+    createTransportRoute, createTransportVehicle, createTransportSchedule, 
+    fetchStaffRoster,
+    deleteTransportRoute, deleteTransportVehicle, deleteTransportSchedule
+} from '../../services/api';
 
 // --- Sub-Component: Route Form ---
+// (No changes to this sub-component)
 function RouteForm({ onCreation, onToggle }) {
     const [formData, setFormData] = useState({ routeId: '', routeName: '', description: '' });
     const [message, setMessage] = useState('');
@@ -40,6 +47,7 @@ function RouteForm({ onCreation, onToggle }) {
 }
 
 // --- Sub-Component: Vehicle Form ---
+// (No changes to this sub-component)
 function VehicleForm({ onCreation, routes, onToggle }) {
     const [formData, setFormData] = useState({ vehicleId: '', vehicleName: '', licensePlate: '', capacity: '', defaultRouteId: routes[0]?.Route_ID || '' });
     const [message, setMessage] = useState('');
@@ -86,6 +94,7 @@ function VehicleForm({ onCreation, routes, onToggle }) {
 }
 
 // --- Sub-Component: Schedule Form ---
+// (No changes to this sub-component)
 function ScheduleForm({ onCreation, routes, vehicles, staff, onToggle }) {
     const [formData, setFormData] = useState({ staffId: staff[0]?.Staff_ID || '', routeId: routes[0]?.Route_ID || '', vehicleId: vehicles[0]?.Vehicle_ID || '', departureTime: new Date().toISOString().slice(0, 16) });
     const [message, setMessage] = useState('');
@@ -120,7 +129,6 @@ function ScheduleForm({ onCreation, routes, vehicles, staff, onToggle }) {
 
     const handleChange = (e) => setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
     
-    // Check if data is loaded
     if (routes.length === 0 || vehicles.length === 0 || staff.length === 0) {
         return <p style={{ color: 'var(--color-warning)' }}>Loading dependencies or missing data to create a schedule.</p>;
     }
@@ -194,6 +202,16 @@ function TransportScheduler({ refreshKey, onScheduleUpdate }) {
 
     const tableHeaderStyle = { padding: '12px 10px', textAlign: 'left', borderRight: '1px solid rgba(255,255,255,0.2)', fontWeight: '600' };
     const tableCellStyle = { padding: '10px', borderRight: '1px solid #ddd' };
+    // 🌟 NEW Style for delete button
+    const deleteButtonStyle = {
+        backgroundColor: 'var(--color-danger)',
+        color: 'var(--color-white)',
+        border: 'none',
+        padding: '5px 8px',
+        fontSize: '0.8em',
+        borderRadius: '4px',
+        cursor: 'pointer'
+    };
 
     const handleFormToggle = (formName) => {
         setActiveForm(activeForm === formName ? null : formName);
@@ -201,8 +219,44 @@ function TransportScheduler({ refreshKey, onScheduleUpdate }) {
 
     const handleCreation = () => {
         loadData(); // Reload data after successful creation
-        setActiveForm(null);
-        onScheduleUpdate();
+        // 🌟 Don't close form on success, message appears in form
+        // setActiveForm(null); 
+        onScheduleUpdate(); // Propagate update
+    };
+
+    // 🌟 NEW Generic Delete Handler
+    const handleDelete = async (type, id) => {
+        let deleteFunction;
+        let itemType;
+        
+        switch(type) {
+            case 'route':
+                deleteFunction = deleteTransportRoute;
+                itemType = 'route';
+                break;
+            case 'vehicle':
+                deleteFunction = deleteTransportVehicle;
+                itemType = 'vehicle';
+                break;
+            case 'schedule':
+                deleteFunction = deleteTransportSchedule;
+                itemType = 'schedule';
+                break;
+            default:
+                return;
+        }
+
+        if (!window.confirm(`Are you sure you want to delete ${itemType} ${id}? This may fail if it is in use.`)) {
+            return;
+        }
+
+        try {
+            const result = await deleteFunction(id);
+            alert(result.message);
+            loadData(); // Refresh all data
+        } catch (err) {
+            alert(`Error: ${err.message}`);
+        }
     };
     
     if (loading) return <p>Loading Transport Data...</p>;
@@ -224,6 +278,7 @@ function TransportScheduler({ refreshKey, onScheduleUpdate }) {
                             <th style={tableHeaderStyle}>ID</th>
                             <th style={tableHeaderStyle}>Route Name</th>
                             <th style={tableHeaderStyle}>Description</th>
+                            <th style={tableHeaderStyle}>Actions</th> {/* 🌟 NEW */}
                         </tr>
                     </thead>
                     <tbody>
@@ -232,6 +287,15 @@ function TransportScheduler({ refreshKey, onScheduleUpdate }) {
                                 <td style={tableCellStyle}>{r.Route_ID}</td>
                                 <td style={tableCellStyle}>{r.Route_Name}</td>
                                 <td style={tableCellStyle}>{r.Description}</td>
+                                {/* 🌟 NEW */}
+                                <td style={tableCellStyle}>
+                                    <button 
+                                        onClick={() => handleDelete('route', r.Route_ID)}
+                                        style={deleteButtonStyle}
+                                    >
+                                        Delete
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
@@ -257,6 +321,7 @@ function TransportScheduler({ refreshKey, onScheduleUpdate }) {
                             <th style={tableHeaderStyle}>Plate</th>
                             <th style={tableHeaderStyle}>Capacity</th>
                             <th style={tableHeaderStyle}>Default Route</th>
+                            <th style={tableHeaderStyle}>Actions</th> {/* 🌟 NEW */}
                         </tr>
                     </thead>
                     <tbody>
@@ -266,6 +331,15 @@ function TransportScheduler({ refreshKey, onScheduleUpdate }) {
                                 <td style={tableCellStyle}>{v.License_plate}</td>
                                 <td style={tableCellStyle}>{v.Capacity}</td>
                                 <td style={tableCellStyle}>{v.Default_Route_Name}</td>
+                                {/* 🌟 NEW */}
+                                <td style={tableCellStyle}>
+                                    <button 
+                                        onClick={() => handleDelete('vehicle', v.Vehicle_ID)}
+                                        style={deleteButtonStyle}
+                                    >
+                                        Delete
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
@@ -292,6 +366,7 @@ function TransportScheduler({ refreshKey, onScheduleUpdate }) {
                             <th style={tableHeaderStyle}>Time</th>
                             <th style={tableHeaderStyle}>Vehicle</th>
                             <th style={tableHeaderStyle}>Driver</th>
+                            <th style={tableHeaderStyle}>Actions</th> {/* 🌟 NEW */}
                         </tr>
                     </thead>
                     <tbody>
@@ -302,6 +377,15 @@ function TransportScheduler({ refreshKey, onScheduleUpdate }) {
                                 <td style={tableCellStyle}>{new Date(s.Departure_time).toLocaleString()}</td>
                                 <td style={tableCellStyle}>{s.Vehicle_Name} ({s.License_plate})</td>
                                 <td style={tableCellStyle}>{s.Staff_Driver}</td>
+                                {/* 🌟 NEW */}
+                                <td style={tableCellStyle}>
+                                    <button 
+                                        onClick={() => handleDelete('schedule', s.Schedule_ID)}
+                                        style={deleteButtonStyle}
+                                    >
+                                        Delete
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>

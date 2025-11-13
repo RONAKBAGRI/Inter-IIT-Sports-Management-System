@@ -1,6 +1,6 @@
 // client/src/components/ParticipantList.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { fetchParticipants } from '../services/api';
+import { fetchParticipants, deleteParticipant } from '../services/api'; // 🌟 Import deleteParticipant
 
 function ParticipantList({ refreshKey }) {
     const [participants, setParticipants] = useState([]);
@@ -35,8 +35,32 @@ function ParticipantList({ refreshKey }) {
         setSearchTerm(e.target.value);
     };
 
+    // 🌟 NEW Delete Handler
+    const handleDelete = async (id) => {
+        if (!window.confirm(`Are you sure you want to delete participant ${id}? This may fail if they are in a team or event.`)) {
+            return;
+        }
+        try {
+            const result = await deleteParticipant(id);
+            alert(result.message);
+            loadParticipants(searchTerm); // Refresh the list
+        } catch (err) {
+            alert(`Error: ${err.message}`);
+        }
+    };
+
     const tableHeaderStyle = { padding: '12px 10px', textAlign: 'left', borderRight: '1px solid rgba(255,255,255,0.2)', fontWeight: '600' };
     const tableCellStyle = { padding: '10px', borderRight: '1px solid #ddd' };
+    // 🌟 NEW Style for delete button
+    const deleteButtonStyle = {
+        backgroundColor: 'var(--color-danger)',
+        color: 'var(--color-white)',
+        border: 'none',
+        padding: '5px 8px',
+        fontSize: '0.8em',
+        borderRadius: '4px',
+        cursor: 'pointer'
+    };
 
     if (error) return <div style={{ color: 'var(--color-danger)', fontWeight: 'bold', padding: '20px' }}>Error: {error}</div>;
 
@@ -73,6 +97,7 @@ function ParticipantList({ refreshKey }) {
                             <th style={tableHeaderStyle}>Hostel</th>
                             <th style={tableHeaderStyle}>Mess</th>
                             <th style={tableHeaderStyle}>Email</th>
+                            <th style={tableHeaderStyle}>Actions</th> {/* 🌟 NEW Column */}
                         </tr>
                     </thead>
                     <tbody>
@@ -84,6 +109,15 @@ function ParticipantList({ refreshKey }) {
                                 <td style={tableCellStyle}>{p.Hostel}</td>
                                 <td style={tableCellStyle}>{p.Mess}</td>
                                 <td style={tableCellStyle}>{p.Email}</td>
+                                {/* 🌟 NEW Cell */}
+                                <td style={tableCellStyle}>
+                                    <button 
+                                        onClick={() => handleDelete(p.Participant_ID)}
+                                        style={deleteButtonStyle}
+                                    >
+                                        Delete
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
