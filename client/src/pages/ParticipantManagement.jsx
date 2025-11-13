@@ -2,21 +2,22 @@
 import React, { useState } from 'react';
 import ParticipantForm from '../components/ParticipantForm.jsx';
 import ParticipantList from '../components/ParticipantList.jsx';
-// Assuming ParticipantRegistration.jsx is created and imported for a responsive layout
-// import ParticipantRegistration from '../components/ParticipantRegistration.jsx';
 
 function ParticipantManagement() {
     const [refreshKey, setRefreshKey] = useState(0); 
+    // State to hold the participant being edited
+    const [selectedParticipant, setSelectedParticipant] = useState(null);
 
     const handleParticipantSave = () => {
         setRefreshKey(prev => prev + 1);
+        // Clear the selected participant after a save (create or update)
+        setSelectedParticipant(null);
     };
 
     return (
         <div>
             <h2>👤 Participant Roster Management</h2>
             
-            {/* Updated to use responsive-flex-container class */}
             <div className="responsive-flex-container" style={{ 
                 display: 'flex', 
                 gap: 'var(--gap-base)', 
@@ -24,19 +25,22 @@ function ParticipantManagement() {
                 flexWrap: 'wrap'
             }}>
                 
-                {/* Participant Form: Takes up a smaller width but ensures min-width for usability */}
+                {/* Participant Form: Takes up a smaller width */}
                 <div style={{ flex: '1 1 30%', minWidth: '300px' }}>
-                    <ParticipantForm onSave={handleParticipantSave} />
+                    {/* Pass the participant to the form */}
+                    <ParticipantForm 
+                        onSave={handleParticipantSave} 
+                        participantToEdit={selectedParticipant} 
+                    />
                 </div>
-
-                {/* If ParticipantRegistration was implemented, it would go here, using similar flex styling */}
-                {/* <div style={{ flex: '1 1 30%', minWidth: '300px' }}>
-                    <ParticipantRegistration onEnrollment={handleParticipantSave} />
-                </div> */}
                 
-                {/* Participant List: Takes up the remaining width, ensuring minimal horizontal scrolling */}
+                {/* Participant List: Takes up the remaining width */}
                 <div style={{ flex: '2 1 65%', minWidth: '400px' }}>
-                    <ParticipantList refreshKey={refreshKey} />
+                    {/* Pass the 'setter' to the list */}
+                    <ParticipantList 
+                        refreshKey={refreshKey} 
+                        onEdit={setSelectedParticipant} 
+                    />
                 </div>
             </div>
         </div>

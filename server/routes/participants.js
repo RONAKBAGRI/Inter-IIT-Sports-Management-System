@@ -21,9 +21,8 @@ router.get('/data/lookup', async (req, res) => {
 
 // --- CRUD Operations for Participants ---
 
-// 1. READ ALL Participants (Including joined data for display)
+// 1. READ ALL Participants (Including joined data for display and edit)
 router.get('/', async (req, res) => {
-    // **NEW LOGIC START**
     const { search } = req.query; // Get search term from query parameters
     // Query FIX: Changed table names to lowercase
     let sqlQuery = `
@@ -31,7 +30,13 @@ router.get('/', async (req, res) => {
             P.Participant_ID, P.Name, P.DOB, P.Gender, P.Email,
             I.Short_Name AS Institute, 
             H.Hostel_Name AS Hostel, 
-            M.Mess_Name AS Mess
+            M.Mess_Name AS Mess,
+            
+            -- Added IDs needed for the edit form
+            P.Institute_ID,
+            P.Hostel_ID,
+            P.Mess_ID
+            
         FROM participants P
         JOIN institutes I ON P.Institute_ID = I.Institute_ID
         JOIN hostels H ON P.Hostel_ID = H.Hostel_ID
@@ -51,7 +56,6 @@ router.get('/', async (req, res) => {
     sqlQuery += `
         ORDER BY P.Institute_ID, P.Name
     `;
-    // **NEW LOGIC END**
 
     try {
         const [results] = await db.query(sqlQuery, queryParams);
@@ -66,7 +70,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     const { name, dob, gender, email, hostelId, instituteId, messId } = req.body;
     
-    // Simple validation (Add more robust validation in a real app)
+    // Simple validation
     if (!name || !email || !instituteId) {
         return res.status(400).json({ message: 'Missing required participant fields.' });
     }
@@ -85,7 +89,7 @@ router.post('/', async (req, res) => {
             id: result.insertId 
         });
     } catch (err) {
-        // Handle database errors (e.g., foreign key violations, duplicate emails)
+        // Handle database errors
         console.error('Error registering participant:', err.message);
         res.status(400).json({ 
             message: 'Registration failed. Check if email is unique or if IDs (Hostel, Institute, Mess) exist.',
@@ -95,19 +99,32 @@ router.post('/', async (req, res) => {
 });
 
 
-// 3. UPDATE Participant (PUT) - Placeholder
+// 3. UPDATE Participant (PUT)
 router.put('/:id', async (req, res) => {
     const { id } = req.params;
-    const { name, email, hostelId, messId } = req.body;
+    // Get all fields from the form
+    const { name, dob, gender, email, hostelId, instituteId, messId } = req.body;
+
+    // Basic validation
+    if (!name || !email || !instituteId || !hostelId || !messId || !dob || !gender) {
+        return res.status(400).json({ message: 'Missing required participant fields.' });
+    }
     
     try {
         // Query FIX: Changed table names to lowercase
         const query = `
             UPDATE participants 
-            SET Name = ?, Email = ?, Hostel_ID = ?, Mess_ID = ?
+            SET 
+                Name = ?, 
+                Email = ?, 
+                DOB = ?,
+                Gender = ?,
+                Hostel_ID = ?, 
+                Mess_ID = ?,
+                Institute_ID = ?
             WHERE Participant_ID = ?
         `;
-        const [result] = await db.query(query, [name, email, hostelId, messId, id]);
+        const [result] = await db.query(query, [name, email, dob, gender, hostelId, messId, instituteId, id]);
         
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Participant not found.' });
@@ -116,11 +133,14 @@ router.put('/:id', async (req, res) => {
         res.json({ message: `Participant ${id} updated successfully.` });
     } catch (err) {
         console.error('Error updating participant:', err.message);
-        res.status(400).json({ message: 'Update failed.' });
+        res.status(400).json({ 
+            message: 'Update failed. Is the email still unique?',
+            error: err.code 
+        });
     }
 });
 
-// 4. DELETE Participant (DELETE) - 🌟 FINALIZED
+// 4. DELETE Participant (DELETE)
 router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     

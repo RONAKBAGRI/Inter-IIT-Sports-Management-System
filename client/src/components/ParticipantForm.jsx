@@ -1,44 +1,72 @@
-// client/src/components/ParticipantForm.jsx (UPDATED with Conditional Filtering)
+// client/src/components/ParticipantForm.jsx
 import React, { useState, useEffect } from 'react';
-import { createParticipant, fetchParticipantLookupData } from '../services/api';
+import { createParticipant, fetchParticipantLookupData, updateParticipant } from '../services/api';
 
-function ParticipantForm({ onSave }) {
-    const [formData, setFormData] = useState({ 
-        name: '', dob: '', gender: 'M', email: '', 
-        hostelId: '', instituteId: '', messId: '' 
-    });
+// Accept 'participantToEdit' prop
+function ParticipantForm({ onSave, participantToEdit }) {
+    
+    // Define a reusable initial state function
+    const getInitialFormData = (institutes = [], hostels = [], messes = []) => {
+        const initialInstituteId = institutes[0]?.Institute_ID || '';
+        const initialHostelId = hostels[0]?.Hostel_ID || '';
+        const defaultHostel = hostels.find(h => h.Hostel_ID === initialHostelId);
+        const defaultHostInstituteId = defaultHostel ? defaultHostel.Institute_ID : null;
+        const initialFilteredMesses = messes.filter(m => m.Institute_ID === defaultHostInstituteId);
+        const initialMessId = initialFilteredMesses[0]?.Mess_ID || '';
+
+        return {
+            name: '', 
+            dob: '', 
+            gender: 'M', 
+            email: '', 
+            hostelId: initialHostelId, 
+            instituteId: initialInstituteId, 
+            messId: initialMessId 
+        };
+    };
+
+    const [formData, setFormData] = useState(getInitialFormData());
     const [lookupData, setLookupData] = useState({ institutes: [], hostels: [], messes: [] });
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
 
+    // Load lookup data (hostels, messes, etc.) on component mount
     useEffect(() => {
-        // Load initial data for dropdowns
         fetchParticipantLookupData().then(data => {
             setLookupData(data);
-            
-            const initialInstituteId = data.institutes[0]?.Institute_ID || '';
-            const initialHostelId = data.hostels[0]?.Hostel_ID || '';
-            
-            const defaultHostel = data.hostels.find(h => h.Hostel_ID === initialHostelId);
-            const defaultHostInstituteId = defaultHostel ? defaultHostel.Institute_ID : null;
-
-            const initialFilteredMesses = data.messes.filter(m => m.Institute_ID === defaultHostInstituteId);
-            const initialMessId = initialFilteredMesses[0]?.Mess_ID || '';
-
-            setFormData(prev => ({
-                ...prev,
-                instituteId: initialInstituteId,
-                hostelId: initialHostelId,
-                messId: initialMessId
-            }));
+            // Set initial form data using the loaded lookup data
+            // This runs only once and sets the defaults for a NEW entry
+            setFormData(getInitialFormData(data.institutes, data.hostels, data.messes));
         }).catch(() => setError('Failed to load dependency data.'));
     }, []);
+
+    // Watch for changes to 'participantToEdit'
+    useEffect(() => {
+        if (participantToEdit) {
+            // If participantToEdit exists, fill the form with its data
+            setFormData({
+                name: participantToEdit.Name,
+                dob: new Date(participantToEdit.DOB).toISOString().slice(0, 10), // Format date for input
+                gender: participantToEdit.Gender,
+                email: participantToEdit.Email,
+                hostelId: participantToEdit.Hostel_ID,
+                instituteId: participantToEdit.Institute_ID,
+                messId: participantToEdit.Mess_ID
+            });
+            setMessage(''); // Clear any old messages
+            setError('');
+        } else {
+            // If it's null (e.g., after saving or cancelling), reset the form
+            setFormData(getInitialFormData(lookupData.institutes, lookupData.hostels, lookupData.messes));
+        }
+    }, [participantToEdit, lookupData]); // Rerun when prop or lookup data changes
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    // Mess filtering logic (no changes)
     const currentHostelId = formData.hostelId;
     const selectedHostel = lookupData.hostels.find(h => h.Hostel_ID === parseInt(currentHostelId));
     const hostingInstituteId = selectedHostel ? selectedHostel.Institute_ID : null;
@@ -48,10 +76,8 @@ function ParticipantForm({ onSave }) {
         const newHostelId = e.target.value;
         const newSelectedHostel = lookupData.hostels.find(h => h.Hostel_ID === parseInt(newHostelId));
         const newHostingInstituteId = newSelectedHostel ? newSelectedHostel.Institute_ID : null;
-
         const newFilteredMesses = lookupData.messes.filter(m => m.Institute_ID === newHostingInstituteId);
         const newMessId = newFilteredMesses[0]?.Mess_ID || '';
-
         setFormData(prev => ({ 
             ...prev, 
             hostelId: newHostelId, 
@@ -59,14 +85,25 @@ function ParticipantForm({ onSave }) {
         }));
     };
 
+    // Function to clear the form and notify parent
+    const clearForm = () => {
+        setFormData(getInitialFormData(lookupData.institutes, lookupData.hostels, lookupData.messes));
+        setMessage('');
+        setError('');
+        onSave(); // This notifies the parent to set selectedParticipant to null
+    };
 
+    // Updated handleSubmit to handle both Create and Update
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessage('');
         setError('');
 
-        if (!formData.messId) {
-             return setError('No valid Mess available for the selected Hostel/Institute.');
+        if (!formData.messId && filteredMesses.length > 0) {
+             return setError('Please select a valid Mess.');
+        }
+        if (filteredMesses.length === 0 && lookupData.messes.length > 0) {
+            return setError('No valid Mess available for the selected Hostel/Institute.');
         }
         
         try {
@@ -77,13 +114,26 @@ function ParticipantForm({ onSave }) {
                 messId: parseInt(formData.messId)
             };
 
-            const result = await createParticipant(dataToSend);
+            let result;
+            if (participantToEdit) {
+                // UPDATE logic
+                result = await updateParticipant(participantToEdit.Participant_ID, dataToSend);
+            } else {
+                // CREATE logic
+                result = await createParticipant(dataToSend);
+            }
+
             setMessage(result.message);
-            onSave();
+            onSave(); // Notifies parent to refresh list AND clear selection
         } catch (err) {
             setError(err.message || 'An unknown error occurred.');
         }
     };
+
+    // Dynamic title and button text
+    const isEditing = !!participantToEdit;
+    const formTitle = isEditing ? '👤 Edit Athlete' : '👤 Register Athlete';
+    const submitButtonText = isEditing ? 'Save Changes' : 'Submit Registration';
 
     return (
         <div style={{ 
@@ -92,7 +142,9 @@ function ParticipantForm({ onSave }) {
             borderRadius: '8px', 
             boxShadow: '0 4px 8px rgba(0,0,0,0.1)' 
         }}>
-            <h3 style={{ color: 'var(--color-primary-dark)', borderBottom: '1px solid #ccc', paddingBottom: '10px' }}>👤 Register Athlete</h3>
+            <h3 style={{ color: 'var(--color-primary-dark)', borderBottom: '1px solid #ccc', paddingBottom: '10px' }}>
+                {formTitle}
+            </h3>
             {message && <p style={{ color: 'var(--color-success)', fontWeight: 'bold' }}>{message}</p>}
             {error && <p style={{ color: 'var(--color-danger)', fontWeight: 'bold' }}>{error}</p>}
             
@@ -141,9 +193,21 @@ function ParticipantForm({ onSave }) {
                     )}
                 </select>
 
-                <button type="submit" style={{ marginTop: '20px' }} disabled={filteredMesses.length === 0}>
-                    Submit Registration
-                </button>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                    <button type="submit" disabled={filteredMesses.length === 0 && lookupData.messes.length > 0} style={{ flex: 2 }}>
+                        {submitButtonText}
+                    </button>
+                    {/* Cancel button only shows when editing */}
+                    {isEditing && (
+                        <button 
+                            type="button" 
+                            onClick={clearForm} 
+                            style={{ flex: 1, backgroundColor: 'var(--color-secondary)' }}
+                        >
+                            Cancel
+                        </button>
+                    )}
+                </div>
             </form>
         </div>
     );

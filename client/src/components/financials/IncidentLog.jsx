@@ -1,18 +1,26 @@
 // client/src/components/financials/IncidentLog.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-// 🌟 Import deleteIncident
-import { createIncident, fetchIncidents, fetchParticipants, fetchStaffRoster, deleteIncident } from '../../services/api';
+// 🌟 Import updateIncident
+import { createIncident, fetchIncidents, fetchParticipants, fetchStaffRoster, deleteIncident, updateIncident } from '../../services/api';
 
 // --- Incident Filing Form Component ---
-// (No changes to this sub-component)
-function IncidentForm({ onCreation, onToggle }) {
-    const [formData, setFormData] = useState({ 
-        participantId: '', staffId: '', description: '', severity: 'Medium', actionTaken: '' 
+// 🌟 Now accepts incidentToEdit and onSuccess
+function IncidentForm({ onCreation: onSuccess, onToggle, incidentToEdit }) {
+    
+    const getInitialState = (participants, staff) => ({
+        participantId: participants[0]?.Participant_ID || '', 
+        staffId: staff[0]?.Staff_ID || '', 
+        description: '', 
+        severity: 'Medium', 
+        actionTaken: '' 
     });
+
+    const [formData, setFormData] = useState(getInitialState([], []));
     const [lookup, setLookup] = useState({ participants: [], staff: [] });
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
 
+    // Load lookup data
     useEffect(() => {
         const loadLookup = async () => {
             try {
@@ -23,24 +31,39 @@ function IncidentForm({ onCreation, onToggle }) {
                 
                 setLookup({ participants: participantsData, staff: staffData });
                 
-                // Set defaults
-                setFormData(prev => ({
-                    ...prev,
-                    participantId: participantsData[0]?.Participant_ID || '',
-                    staffId: staffData[0]?.Staff_ID || ''
-                }));
+                // Set defaults only if not editing
+                if (!incidentToEdit) {
+                    setFormData(getInitialState(participantsData, staffData));
+                }
             } catch (err) {
                 setError('Failed to load required lookup data for Participants/Staff.');
             }
         };
         loadLookup();
-    }, []);
+    }, [incidentToEdit]); // Rerun if incidentToEdit is cleared
+
+    // 🌟 Load data when incidentToEdit prop changes
+    useEffect(() => {
+        if (incidentToEdit) {
+            setFormData({
+                participantId: incidentToEdit.Participant_ID || '',
+                staffId: incidentToEdit.Staff_ID,
+                description: incidentToEdit.Description,
+                severity: incidentToEdit.Severity,
+                actionTaken: incidentToEdit.Action_taken || ''
+            });
+            setMessage('');
+            setError('');
+        }
+        // No 'else' block needed, loadLookup effect handles initial state
+    }, [incidentToEdit]);
 
     const handleChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
         setMessage(''); setError('');
     };
 
+    // 🌟 handleSubmit now handles both Create and Update
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessage(''); setError('');
@@ -52,18 +75,30 @@ function IncidentForm({ onCreation, onToggle }) {
         };
         
         try {
-            const result = await createIncident(dataToSend);
+            let result;
+            if (incidentToEdit) {
+                // UPDATE
+                result = await updateIncident(incidentToEdit.Report_ID, dataToSend);
+            } else {
+                // CREATE
+                result = await createIncident(dataToSend);
+            }
+            
             setMessage(result.message);
-            onCreation();
-            setFormData(prev => ({ ...prev, description: '', actionTaken: '', severity: 'Medium' })); // Reset mutable fields
+            onSuccess(); // Triggers list refresh and hides form
+            setFormData(getInitialState(lookup.participants, lookup.staff)); // Reset fields
         } catch (err) {
-            setError(err.message || 'Incident filing failed.');
+            setError(err.message || 'Incident operation failed.');
         }
     };
 
+    const isEditing = !!incidentToEdit;
+
     return (
         <div style={{ padding: '15px', border: '1px solid var(--color-danger)', borderRadius: '6px', backgroundColor: '#fff6f7', marginBottom: '20px' }}>
-            <h4 style={{ color: 'var(--color-dark)', marginTop: 0, borderBottom: '1px solid #ccc', paddingBottom: '10px' }}>File New Incident Report</h4>
+            <h4 style={{ color: 'var(--color-dark)', marginTop: 0, borderBottom: '1px solid #ccc', paddingBottom: '10px' }}>
+                {isEditing ? 'Edit Incident Report' : 'File New Incident Report'}
+            </h4>
             {message && <p style={{ color: 'var(--color-success)', fontWeight: 'bold' }}>{message}</p>}
             {error && <p style={{ color: 'var(--color-danger)', fontWeight: 'bold' }}>{error}</p>}
             
@@ -83,7 +118,7 @@ function IncidentForm({ onCreation, onToggle }) {
                     ))}
                 </select>
                 
-                <textarea name="description" placeholder="Detailed Description of Incident (e.g., fight, injury, equipment damage)" value={formData.description} onChange={handleChange} required rows="3"/>
+                <textarea name="description" placeholder="Detailed Description of Incident" value={formData.description} onChange={handleChange} required rows="3"/>
                 
                 <label style={{ fontWeight: 'bold', fontSize: '0.9em' }}>Severity:</label>
                 <select name="severity" value={formData.severity} onChange={handleChange} required>
@@ -92,10 +127,16 @@ function IncidentForm({ onCreation, onToggle }) {
                     <option value="High">High</option>
                 </select>
                 
-                <input name="actionTaken" type="text" placeholder="Action Taken (e.g., Verbal Warning, Fine Issued) - Optional" value={formData.actionTaken} onChange={handleChange} />
+                <input name="actionTaken" type="text" placeholder="Action Taken (Optional)" value={formData.actionTaken} onChange={handleChange} />
 
-                <button type="submit" style={{ marginTop: '10px', backgroundColor: 'var(--color-danger)' }}>File Report</button>
-                <button type="button" onClick={onToggle} style={{ backgroundColor: 'var(--color-secondary)' }}>Hide Form</button>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                    <button type="submit" style={{ flex: 2, backgroundColor: 'var(--color-danger)' }}>
+                        {isEditing ? 'Save Changes' : 'File Report'}
+                    </button>
+                    <button type="button" onClick={onToggle} style={{ flex: 1, backgroundColor: 'var(--color-secondary)' }}>
+                        Cancel
+                    </button>
+                </div>
             </form>
         </div>
     );
@@ -108,6 +149,8 @@ function IncidentLog({ refreshKey, onUpdate }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showForm, setShowForm] = useState(false);
+    // 🌟 State for the incident being edited
+    const [incidentToEdit, setIncidentToEdit] = useState(null);
 
     const loadIncidents = useCallback(async () => {
         setLoading(true);
@@ -126,7 +169,6 @@ function IncidentLog({ refreshKey, onUpdate }) {
         loadIncidents();
     }, [loadIncidents, refreshKey]);
 
-    // 🌟 NEW Delete Handler
     const handleDelete = async (id) => {
         if (!window.confirm(`Are you sure you want to delete incident report ${id}?`)) {
             return;
@@ -140,9 +182,39 @@ function IncidentLog({ refreshKey, onUpdate }) {
         }
     };
 
+    // 🌟 Handler to set up the form for editing
+    const handleEdit = (incident) => {
+        setIncidentToEdit(incident);
+        setShowForm(true);
+    };
+
+    // 🌟 Handler to reset the form
+    const handleToggleForm = () => {
+        setShowForm(prev => !prev);
+        setIncidentToEdit(null); // Clear edit state when toggling
+    };
+
+    // 🌟 Handler for when form is submitted successfully
+    const handleFormSuccess = () => {
+        onUpdate(); // This is the prop (re-fetches data via refreshKey)
+        setIncidentToEdit(null); // Clear edit state
+        setShowForm(false); // Hide the form
+    };
+
     const tableHeaderStyle = { padding: '12px 10px', textAlign: 'left', borderRight: '1px solid rgba(255,255,255,0.2)', fontWeight: '600' };
     const tableCellStyle = { padding: '10px', borderRight: '1px solid #ddd' };
-    // 🌟 NEW Style for delete button
+
+    const editButtonStyle = {
+        backgroundColor: 'var(--color-primary)',
+        color: 'var(--color-white)',
+        border: 'none',
+        padding: '5px 8px',
+        fontSize: '0.8em',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        marginRight: '5px'
+    };
+    
     const deleteButtonStyle = {
         backgroundColor: 'var(--color-danger)',
         color: 'var(--color-white)',
@@ -173,10 +245,16 @@ function IncidentLog({ refreshKey, onUpdate }) {
 
             <div style={{ marginBottom: '20px' }}>
                 {!showForm && (
-                    <button onClick={() => setShowForm(true)} style={{ backgroundColor: 'var(--color-danger)' }}>+ File New Incident</button>
+                    <button onClick={handleToggleForm} style={{ backgroundColor: 'var(--color-danger)' }}>+ File New Incident</button>
                 )}
-                {/* Note: IncidentForm handles its own success/error messages */}
-                {showForm && <IncidentForm onCreation={onUpdate} onToggle={() => setShowForm(false)} />}
+                {/* 🌟 Pass correct props to the form */}
+                {showForm && (
+                    <IncidentForm 
+                        onCreation={handleFormSuccess} 
+                        onToggle={handleToggleForm} 
+                        incidentToEdit={incidentToEdit}
+                    />
+                )}
             </div>
             
             <div style={{ maxHeight: '500px', overflowY: 'auto', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', borderRadius: '6px' }}>
@@ -190,7 +268,7 @@ function IncidentLog({ refreshKey, onUpdate }) {
                             <th style={tableHeaderStyle}>Participant</th>
                             <th style={tableHeaderStyle}>Description</th>
                             <th style={tableHeaderStyle}>Action Taken</th>
-                            <th style={tableHeaderStyle}>Actions</th> {/* 🌟 NEW Column */}
+                            <th style={tableHeaderStyle}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -203,8 +281,14 @@ function IncidentLog({ refreshKey, onUpdate }) {
                                 <td style={tableCellStyle}>{i.Participant_Name || 'N/A'}</td>
                                 <td style={{...tableCellStyle, maxWidth: '200px', whiteSpace: 'normal'}}>{i.Description}</td>
                                 <td style={tableCellStyle}>{i.Action_taken || 'PENDING'}</td>
-                                {/* 🌟 NEW Cell */}
                                 <td style={tableCellStyle}>
+                                    {/* 🌟 NEW: Edit button */}
+                                    <button 
+                                        onClick={() => handleEdit(i)}
+                                        style={editButtonStyle}
+                                    >
+                                        Edit
+                                    </button>
                                     <button 
                                         onClick={() => handleDelete(i.Report_ID)}
                                         style={deleteButtonStyle}

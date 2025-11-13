@@ -1,8 +1,9 @@
 // client/src/components/ParticipantList.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { fetchParticipants, deleteParticipant } from '../services/api'; // 🌟 Import deleteParticipant
+import { fetchParticipants, deleteParticipant } from '../services/api';
 
-function ParticipantList({ refreshKey }) {
+// Accept 'onEdit' prop to pass the selected participant up
+function ParticipantList({ refreshKey, onEdit }) {
     const [participants, setParticipants] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -15,16 +16,17 @@ function ParticipantList({ refreshKey }) {
             const data = await fetchParticipants(currentSearchTerm);
             setParticipants(data);
         } catch (err) {
-            setError('Could not fetch data from API. Is the Node.js server running on port 5000?');
+            setError('Could not fetch data from API. Is the Node.js server running?');
         } finally {
             setLoading(false);
         }
     }, []);
 
+    // Effect to load participants based on search term or refresh key
     useEffect(() => {
         const handler = setTimeout(() => {
             loadParticipants(searchTerm);
-        }, 500);
+        }, 500); // Debounce search
 
         return () => {
             clearTimeout(handler);
@@ -35,7 +37,7 @@ function ParticipantList({ refreshKey }) {
         setSearchTerm(e.target.value);
     };
 
-    // 🌟 NEW Delete Handler
+    // Handler for the Delete button
     const handleDelete = async (id) => {
         if (!window.confirm(`Are you sure you want to delete participant ${id}? This may fail if they are in a team or event.`)) {
             return;
@@ -49,9 +51,21 @@ function ParticipantList({ refreshKey }) {
         }
     };
 
+    // Styles for table and buttons
     const tableHeaderStyle = { padding: '12px 10px', textAlign: 'left', borderRight: '1px solid rgba(255,255,255,0.2)', fontWeight: '600' };
     const tableCellStyle = { padding: '10px', borderRight: '1px solid #ddd' };
-    // 🌟 NEW Style for delete button
+    
+    const editButtonStyle = {
+        backgroundColor: 'var(--color-primary)',
+        color: 'var(--color-white)',
+        border: 'none',
+        padding: '5px 8px',
+        fontSize: '0.8em',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        marginRight: '5px' // Add space between buttons
+    };
+
     const deleteButtonStyle = {
         backgroundColor: 'var(--color-danger)',
         color: 'var(--color-white)',
@@ -95,9 +109,8 @@ function ParticipantList({ refreshKey }) {
                             <th style={tableHeaderStyle}>Name</th>
                             <th style={tableHeaderStyle}>Institute</th>
                             <th style={tableHeaderStyle}>Hostel</th>
-                            <th style={tableHeaderStyle}>Mess</th>
                             <th style={tableHeaderStyle}>Email</th>
-                            <th style={tableHeaderStyle}>Actions</th> {/* 🌟 NEW Column */}
+                            <th style={{...tableHeaderStyle, width: '120px'}}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -107,10 +120,15 @@ function ParticipantList({ refreshKey }) {
                                 <td style={tableCellStyle}>{p.Name}</td>
                                 <td style={tableCellStyle}>{p.Institute}</td>
                                 <td style={tableCellStyle}>{p.Hostel}</td>
-                                <td style={tableCellStyle}>{p.Mess}</td>
                                 <td style={tableCellStyle}>{p.Email}</td>
-                                {/* 🌟 NEW Cell */}
                                 <td style={tableCellStyle}>
+                                    {/* Edit button calls onEdit with the full participant object */}
+                                    <button 
+                                        onClick={() => onEdit(p)}
+                                        style={editButtonStyle}
+                                    >
+                                        Edit
+                                    </button>
                                     <button 
                                         onClick={() => handleDelete(p.Participant_ID)}
                                         style={deleteButtonStyle}

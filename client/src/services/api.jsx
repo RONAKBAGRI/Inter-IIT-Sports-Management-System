@@ -41,6 +41,20 @@ export const createParticipant = async (participantData) => {
     }
 };
 
+
+// client/src/services/api.jsx (New Update Function)
+
+export const updateParticipant = async (id, participantData) => {
+    try {
+        const response = await axios.put(`${API_BASE_URL}/participants/${id}`, participantData);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Failed to update participant.', error.response.data);
+        throw error.response.data;
+    }
+};
+
+
 // 🌟 NEW
 export const deleteParticipant = async (id) => {
     try {
@@ -60,6 +74,75 @@ export const deleteMatch = async (id) => {
         return response.data;
     } catch (error) {
         console.error('API Error: Failed to delete match.', error.response.data);
+        throw error.response.data;
+    }
+};
+
+
+// client/src/services/api.jsx (New Update Functions Only)
+
+// 🌟 NEW - For Staff
+export const updateStaffMember = async (id, staffData) => {
+    try {
+        const response = await axios.put(`${API_BASE_URL}/logistics/staff/${id}`, staffData);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Failed to update staff member.', error.response.data);
+        throw error.response.data;
+    }
+};
+
+// 🌟 NEW - For Transport Routes
+export const updateTransportRoute = async (id, routeData) => {
+    try {
+        const response = await axios.put(`${API_BASE_URL}/logistics/transport/routes/${id}`, routeData);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Route update failed.', error.response.data);
+        throw error.response.data;
+    }
+};
+
+// 🌟 NEW - For Transport Vehicles
+export const updateTransportVehicle = async (id, vehicleData) => {
+    try {
+        const response = await axios.put(`${API_BASE_URL}/logistics/transport/vehicles/${id}`, vehicleData);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Vehicle update failed.', error.response.data);
+        throw error.response.data;
+    }
+};
+
+// 🌟 NEW - For Transport Schedules
+export const updateTransportSchedule = async (id, scheduleData) => {
+    try {
+        const response = await axios.put(`${API_BASE_URL}/logistics/transport/schedules/${id}`, scheduleData);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Schedule update failed.', error.response.data);
+        throw error.response.data;
+    }
+};
+
+// 🌟 NEW - For Transactions
+export const updateTransaction = async (id, transactionData) => {
+    try {
+        const response = await axios.put(`${API_BASE_URL}/financials/transactions/${id}`, transactionData);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Failed to update transaction.', error.response.data);
+        throw error.response.data;
+    }
+};
+
+// 🌟 NEW - For Incidents
+export const updateIncident = async (id, incidentData) => {
+    try {
+        const response = await axios.put(`${API_BASE_URL}/financials/incidents/${id}`, incidentData);
+        return response.data;
+    } catch (error) {
+        console.error('API Error: Failed to update incident.', error.response.data);
         throw error.response.data;
     }
 };
